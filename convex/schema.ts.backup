@@ -1,0 +1,406 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  // Espacios disponibles en el centro de eventos
+  spaces: defineTable({
+    name: v.string(),
+    description: v.string(),
+    capacity: v.number(),
+    area: v.number(), // metros cuadrados
+    features: v.array(v.string()),
+    images: v.array(v.string()),
+    pricePerHour: v.number(),
+    isActive: v.boolean(),
+  }),
+
+  // Reservas y eventos
+  bookings: defineTable({
+    spaceId: v.optional(v.id("spaces")), // Opcional - todos los espacios están incluidos
+    generatedQuoteId: v.optional(v.id("generatedQuotes")), // Vinculación a cotización original
+    clientName: v.string(),
+    clientEmail: v.string(),
+    clientPhone: v.string(),
+    eventType: v.string(), // boda, corporativo, cumpleaños, etc.
+    eventDate: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    numberOfGuests: v.number(),
+    estimatedGuests: v.number(),
+    status: v.string(), // pending, confirmed, cancelled, completed
+    totalAmount: v.number(),
+    depositPaid: v.number(),
+    balanceRemaining: v.number(),
+    services: v.array(v.string()), // catering, decoración, audio/video, etc.
+    specialRequests: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    // Menú del evento (heredado de cotización si existe)
+    menuSections: v.optional(v.array(v.object({
+      name: v.string(),
+      items: v.array(v.object({
+        category: v.string(),
+        dishes: v.array(v.string()),
+      })),
+    }))),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_space", ["spaceId"])
+    .index("by_date", ["eventDate"])
+    .index("by_status", ["status"])
+    .index("by_generated_quote", ["generatedQuoteId"]),
+
+  // Solicitudes de cotización
+  quoteRequests: defineTable({
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    eventType: v.string(),
+    eventDate: v.optional(v.string()),
+    numberOfGuests: v.number(),
+    message: v.optional(v.string()),
+    status: v.string(), // new, contacted, quoted, converted, declined
+    createdAt: v.number(),
+  }).index("by_status", ["status"]),
+
+  // Historial de cotizaciones generadas
+  generatedQuotes: defineTable({
+    quoteRequestId: v.optional(v.id("quoteRequests")), // Vinculado a solicitud original (opcional)
+    templateId: v.id("quoteTemplates"), // Plantilla usada
+    clientName: v.string(),
+    clientEmail: v.optional(v.string()),
+    clientPhone: v.optional(v.string()),
+    eventDate: v.string(),
+    eventType: v.string(),
+    numberOfGuests: v.number(),
+
+    // Datos de la cotización al momento de generarla (snapshot)
+    templateName: v.string(),
+    includedServices: v.array(v.string()),
+    additionalServices: v.array(v.string()),
+    menuSections: v.array(v.object({
+      name: v.string(),
+      items: v.array(v.object({
+        category: v.string(),
+        dishes: v.array(v.string()),
+      })),
+    })),
+    pricePerPerson: v.number(),
+    minimumGuests: v.number(),
+    totalAmount: v.number(), // precio calculado total
+    currency: v.string(),
+
+    // Seguimiento de conversión
+    status: v.string(), // pending, converted, declined, expired
+    bookingId: v.optional(v.id("bookings")), // Si se convirtió en reserva
+    convertedAt: v.optional(v.number()), // Fecha de conversión
+
+    // Metadata
+    generatedBy: v.optional(v.string()), // Admin que generó
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_status", ["status"])
+    .index("by_client_email", ["clientEmail"])
+    .index("by_event_date", ["eventDate"])
+    .index("by_booking", ["bookingId"])
+    .index("by_quote_request", ["quoteRequestId"]),
+
+  // Plantillas de cotización
+  quoteTemplates: defineTable({
+    name: v.string(), // nombre de la plantilla, ej: "Paseo Familiar", "Boda Premium"
+    eventType: v.string(), // tipo de evento
+    isActive: v.boolean(),
+
+    // Servicios incluidos
+    includedServices: v.array(v.string()),
+
+    // Servicios adicionales incluidos
+    additionalServices: v.array(v.string()),
+
+    // Menú sugerido - array de secciones de menú
+    menuSections: v.array(v.object({
+      name: v.string(), // ej: "Almuerzo Campestre 13:00 hrs"
+      items: v.array(v.object({
+        category: v.string(), // ej: "Principal", "Buffet de Ensaladas"
+        dishes: v.array(v.string()), // lista de platos
+      })),
+    })),
+
+    // Pricing
+    pricePerPerson: v.number(),
+    minimumGuests: v.number(),
+    currency: v.string(), // CLP, USD, etc
+
+    // Términos y condiciones
+    terms: v.string(),
+
+    // Información de firma
+    signatureName: v.string(),
+    signatureTitle: v.string(),
+    signatureLocation: v.string(),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_event_type", ["eventType"])
+    .index("by_active", ["isActive"]),
+
+  // Galería de fotos
+  gallery: defineTable({
+    title: v.string(),
+    imageUrl: v.string(),
+    thumbnailUrl: v.optional(v.string()),
+    category: v.string(), // boda, corporativo, cumpleaños, espacio, etc.
+    eventDate: v.optional(v.string()),
+    isPublic: v.boolean(),
+    order: v.number(),
+  }).index("by_category", ["category"])
+    .index("by_public", ["isPublic"]),
+
+  // Recursos e inventario
+  resources: defineTable({
+    name: v.string(),
+    type: v.string(), // mobiliario, audio/video, decoración, etc.
+    quantity: v.number(),
+    available: v.number(),
+    pricePerUnit: v.optional(v.number()),
+    description: v.optional(v.string()),
+  }),
+
+  // Personal y garzones
+  staff: defineTable({
+    name: v.string(),
+    role: v.string(), // Garzón, Cocina, Diseño, DJ, Animación, Fotografía
+    phone: v.string(),
+    email: v.optional(v.string()),
+    ratePerEvent: v.number(), // tarifa por evento
+    ratePerHour: v.optional(v.number()), // tarifa por hora (opcional)
+    notes: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  }),
+
+  // Asignación de personal a eventos
+  staffAssignments: defineTable({
+    bookingId: v.id("bookings"),
+    staffId: v.id("staff"),
+    role: v.string(), // rol específico para este evento
+    scheduledStartTime: v.string(),
+    scheduledEndTime: v.string(),
+    confirmedAttendance: v.boolean(),
+    actualStartTime: v.optional(v.string()),
+    actualEndTime: v.optional(v.string()),
+    hoursWorked: v.optional(v.number()),
+    amountToPay: v.number(),
+    paymentStatus: v.string(), // pending, paid, cancelled
+    paymentDate: v.optional(v.string()),
+    paymentMethod: v.optional(v.string()), // efectivo, transferencia, etc.
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_booking", ["bookingId"])
+    .index("by_staff", ["staffId"])
+    .index("by_payment_status", ["paymentStatus"]),
+
+  // Tareas y checklist por evento
+  eventTasks: defineTable({
+    bookingId: v.id("bookings"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    dueDate: v.string(),
+    isCompleted: v.boolean(),
+    assignedTo: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_booking", ["bookingId"]),
+
+  // Cronograma/Timeline del evento
+  eventTimeline: defineTable({
+    bookingId: v.id("bookings"),
+    activityName: v.string(),
+    scheduledTime: v.string(), // formato "HH:MM"
+    duration: v.number(), // minutos
+    description: v.optional(v.string()),
+    order: v.number(),
+    isCompleted: v.boolean(),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_booking", ["bookingId"]),
+
+  // Testimonios
+  testimonials: defineTable({
+    clientName: v.string(),
+    eventType: v.string(),
+    rating: v.number(),
+    comment: v.string(),
+    eventDate: v.string(),
+    isPublic: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_public", ["isPublic"]),
+
+  // Administradores
+  admins: defineTable({
+    username: v.string(),
+    password: v.string(), // En producción, usar hash
+    name: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  }),
+
+  // Sesiones de administradores
+  sessions: defineTable({
+    adminId: v.id("admins"),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_admin", ["adminId"]),
+
+  // Mesas del salón
+  tables: defineTable({
+    tableNumber: v.number(), // Número de mesa
+    title: v.optional(v.string()), // Título personalizado de la mesa
+    capacity: v.number(), // Capacidad máxima de personas
+    shape: v.string(), // redonda, rectangular, cuadrada
+    position: v.optional(v.object({
+      x: v.number(), // posición X en el plano
+      y: v.number(), // posición Y en el plano
+    })),
+    isActive: v.boolean(), // Si está disponible para uso
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+  }),
+
+  // Asignación de invitados a mesas por evento
+  tableAssignments: defineTable({
+    bookingId: v.id("bookings"), // Evento/reserva
+    tableId: v.id("tables"), // Mesa asignada
+    guestName: v.string(), // Nombre del invitado
+    dietaryRestrictions: v.optional(v.string()), // Restricciones alimentarias
+    isConfirmed: v.boolean(), // Si el invitado confirmó asistencia
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_booking", ["bookingId"])
+    .index("by_table", ["tableId"])
+    .index("by_booking_and_table", ["bookingId", "tableId"]),
+
+  // Catálogo de ingredientes
+  ingredients: defineTable({
+    name: v.string(),
+    category: v.string(), // "Carnes", "Vegetales", "Lácteos", "Granos", "Condimentos", "Bebidas"
+    unit: v.string(), // "kg", "unidad", "litro", "gramo"
+    costPerUnit: v.number(),
+    supplier: v.string(),
+    supplierContact: v.optional(v.string()),
+    currentStock: v.number(),
+    minStock: v.number(),
+    notes: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_category", ["category"])
+    .index("by_supplier", ["supplier"])
+    .index("by_active", ["isActive"]),
+
+  // Mapeo de platos a ingredientes (recetas)
+  dishIngredients: defineTable({
+    dishName: v.string(),
+    ingredientId: v.id("ingredients"),
+    quantityPerServing: v.number(),
+    unit: v.string(),
+    notes: v.optional(v.string()),
+    // Campos para IA
+    source: v.union(
+      v.literal("manual"),
+      v.literal("ai-generated"),
+      v.literal("ai-verified")
+    ),
+    aiConfidence: v.optional(v.number()), // 0-100
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_dish", ["dishName"])
+    .index("by_ingredient", ["ingredientId"]),
+
+  // Listas de compras por evento
+  shoppingLists: defineTable({
+    bookingId: v.id("bookings"),
+    generatedQuoteId: v.optional(v.id("generatedQuotes")),
+    eventName: v.string(),
+    eventDate: v.string(),
+    numberOfGuests: v.number(),
+    status: v.string(), // "draft", "pending", "sent", "completed"
+    totalEstimatedCost: v.number(),
+    notes: v.optional(v.string()),
+    createdBy: v.optional(v.string()),
+    // Audit fields
+    auditFlags: v.optional(v.array(v.object({
+      severity: v.union(v.literal("LOW"), v.literal("MEDIUM"), v.literal("HIGH")),
+      title: v.string(),
+      description: v.string(),
+    }))),
+    auditStatus: v.optional(v.union(
+      v.literal("GREEN"),
+      v.literal("YELLOW"),
+      v.literal("RED")
+    )),
+    auditedAt: v.optional(v.number()),
+    auditModel: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_booking", ["bookingId"])
+    .index("by_status", ["status"])
+    .index("by_event_date", ["eventDate"])
+    .index("by_audit_status", ["auditStatus"]),
+
+  // Items de lista de compras
+  shoppingListItems: defineTable({
+    shoppingListId: v.id("shoppingLists"),
+    ingredientId: v.optional(v.id("ingredients")),
+    itemName: v.string(),
+    category: v.string(),
+    unit: v.string(),
+    quantityNeeded: v.number(),
+    quantityOrdered: v.optional(v.number()),
+    estimatedCost: v.number(),
+    actualCost: v.optional(v.number()),
+    supplier: v.string(),
+    isPurchased: v.boolean(),
+    purchasedDate: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    isManualItem: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_shopping_list", ["shoppingListId"])
+    .index("by_ingredient", ["ingredientId"])
+    .index("by_category", ["shoppingListId", "category"])
+    .index("by_purchased", ["shoppingListId", "isPurchased"]),
+
+  // Historial de generaciones con IA
+  aiShoppingListGenerations: defineTable({
+    bookingId: v.id("bookings"),
+    eventName: v.string(),
+    eventType: v.string(),
+    numberOfGuests: v.number(),
+    // Menú analizado (snapshot)
+    menuSections: v.array(v.object({
+      name: v.string(),
+      items: v.array(v.object({
+        category: v.string(),
+        dishes: v.array(v.string()),
+      })),
+    })),
+    // Resultado de la IA (JSON)
+    aiResponse: v.string(), // JSON stringificado
+    // Metadata de generación
+    model: v.string(),
+    promptVersion: v.string(),
+    totalTokens: v.optional(v.number()),
+    // Estado
+    status: v.string(), // "pending", "approved", "rejected"
+    approvedBy: v.optional(v.string()),
+    // Resultado final
+    shoppingListId: v.optional(v.id("shoppingLists")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_booking", ["bookingId"])
+    .index("by_status", ["status"]),
+});
+

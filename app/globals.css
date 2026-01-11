@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142 71% 27%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 71% 27%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 142 71% 35%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142 71% 35%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Estilos adicionales para React Big Calendar */
+.rbc-calendar {
+  font-family: inherit;
+}
+
+.rbc-header {
+  padding: 10px 5px;
+  font-weight: 600;
+}
+
+.rbc-today {
+  background-color: #f0fdf4;
+}
+
+.rbc-event {
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 0.875rem;
+}
+
+/* Asegurar que los botones siempre tengan texto visible */
+button {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Estilos para botones de naturaleza modernos */
+.bg-nature-forest,
+.bg-nature-moss,
+.bg-gradient-nature,
+.bg-gradient-nature-soft,
+.bg-gradient-nature-dark {
+  color: white !important;
+}
+
+.bg-nature-forest:hover,
+.bg-nature-moss:hover,
+.bg-gradient-nature:hover,
+.bg-gradient-nature-soft:hover,
+.bg-gradient-nature-dark:hover {
+  color: white !important;
+}
+
+/* Botones modernos con degradado */
+.btn-gradient-nature {
+  background: linear-gradient(135deg, #0F6356 0%, #059669 100%);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px 0 rgba(15, 99, 86, 0.2);
+}
+
+.btn-gradient-nature:hover {
+  background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
+  box-shadow: 0 6px 20px 0 rgba(15, 99, 86, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Botones con backdrop blur */
+button[class*="backdrop-blur"] {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Asegurar contraste en botones sobre fondos oscuros */
+button[class*="bg-white/10"],
+button[class*="bg-white/20"] {
+  color: white !important;
+  border-color: white !important;
+}
+
+/* Prevenir que los links dentro de botones hereden estilos no deseados */
+button a,
+a button {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Centrado perfecto para contenedores de botones */
+.button-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
