@@ -121,7 +121,7 @@ export default function TestimoniosPage() {
                 </div>
 
                 {/* Comentario */}
-                <p className="text-gray-700 italic">"{testimonial.comment}"</p>
+                <p className="text-gray-700 italic">&quot;{testimonial.comment}&quot;</p>
 
                 {/* Fecha */}
                 <p className="text-sm text-gray-500">

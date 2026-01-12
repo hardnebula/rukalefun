@@ -598,7 +598,7 @@ export default function ReunionesPage() {
                       </p>
                     ) : (
                       <p className="text-sm text-gray-400 italic">
-                        No hay minuta registrada. Haz clic en "Editar" para agregar una.
+                        No hay minuta registrada. Haz clic en &quot;Editar&quot; para agregar una.
                       </p>
                     )}
                   </div>

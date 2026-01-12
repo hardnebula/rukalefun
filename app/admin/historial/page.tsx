@@ -485,7 +485,7 @@ export default function HistorialPage() {
                         </p>
                       ) : (
                         <p className="text-sm text-gray-400 italic">
-                          No hay resumen registrado. Haz clic en "Editar" para agregar uno.
+                          No hay resumen registrado. Haz clic en &quot;Editar&quot; para agregar uno.
                         </p>
                       )}
                     </div>
