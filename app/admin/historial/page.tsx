@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Calendar,
   Clock,
@@ -22,15 +23,25 @@ import {
   Filter,
   CheckCircle,
   TrendingUp,
-  Package
+  Package,
+  Edit,
+  Save
 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function HistorialPage() {
   const allBookings = useQuery(api.bookings.getAllBookings)
+  const updateEventSummary = useMutation(api.bookings.updateEventSummary)
+
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterYear, setFilterYear] = useState("all")
+
+  // Estado para edición del resumen
+  const [editingSummary, setEditingSummary] = useState(false)
+  const [summaryText, setSummaryText] = useState("")
+  const [savingSummary, setSavingSummary] = useState(false)
 
   // Filtrar solo eventos completados
   const completedEvents = allBookings?.filter(booking => booking.status === "completed")
@@ -65,7 +76,29 @@ export default function HistorialPage() {
 
   const handleViewDetails = (event: any) => {
     setSelectedEvent(event)
+    setSummaryText(event.eventSummary || "")
+    setEditingSummary(false)
     setDialogOpen(true)
+  }
+
+  const handleSaveSummary = async () => {
+    if (!selectedEvent) return
+
+    setSavingSummary(true)
+    try {
+      await updateEventSummary({
+        id: selectedEvent._id,
+        eventSummary: summaryText,
+      })
+      toast.success("Resumen guardado exitosamente")
+      setEditingSummary(false)
+      setSelectedEvent({ ...selectedEvent, eventSummary: summaryText })
+    } catch (error) {
+      console.error("Error al guardar resumen:", error)
+      toast.error("Error al guardar el resumen")
+    } finally {
+      setSavingSummary(false)
+    }
   }
 
   return (
@@ -388,26 +421,76 @@ export default function HistorialPage() {
 
               {/* Resumen del Evento */}
               <div className="border-t pt-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-green-600" />
-                  <h4 className="font-semibold text-lg">Resumen del Evento</h4>
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Historial del Evento:</strong> Documenta aquí lo que sucedió en el evento: éxitos, observaciones,
+                    imprevistos, sugerencias de mejora para futuros eventos similares.
+                  </p>
                 </div>
-                {selectedEvent.eventSummary ? (
-                  <div className="p-6 bg-green-50 rounded-lg border border-green-200">
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                      {selectedEvent.eventSummary}
-                    </p>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <h4 className="font-semibold text-lg">Resumen del Evento</h4>
+                    </div>
+                    {!editingSummary ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingSummary(true)}
+                        className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingSummary(false)
+                            setSummaryText(selectedEvent.eventSummary || "")
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveSummary}
+                          disabled={savingSummary}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {savingSummary ? "Guardando..." : "Guardar"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="p-6 bg-amber-50 rounded-lg border border-amber-200">
-                    <p className="text-sm text-amber-800 italic">
-                      No se registró un resumen para este evento.
-                    </p>
-                    <p className="text-xs text-amber-700 mt-2">
-                      Puedes agregarlo desde la sección de Reservas.
-                    </p>
-                  </div>
-                )}
+
+                  {editingSummary ? (
+                    <Textarea
+                      value={summaryText}
+                      onChange={(e) => setSummaryText(e.target.value)}
+                      placeholder="Escribe aquí el resumen del evento: cómo salió todo, qué funcionó bien, qué se puede mejorar, anécdotas destacadas, feedback del cliente, observaciones del equipo, etc."
+                      rows={15}
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className="min-h-[200px] p-4 bg-gray-50 rounded border">
+                      {selectedEvent.eventSummary ? (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {selectedEvent.eventSummary}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">
+                          No hay resumen registrado. Haz clic en "Editar" para agregar uno.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Información de Pago */}

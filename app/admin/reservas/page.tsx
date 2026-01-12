@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Users, Calendar, Clock, MapPin, Phone, Mail, DollarSign, Plus, Trash2, Sparkles, FileText, Save, Edit } from "lucide-react"
+import { Users, Calendar, Clock, MapPin, Phone, Mail, DollarSign, Plus, Trash2, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import EventTimeline from "@/components/admin/EventTimeline"
 import AIEventAssistant from "@/components/admin/AIEventAssistant"
@@ -27,7 +27,6 @@ export default function ReservasAdminPage() {
   const checkAvailability = useMutation(api.bookings.checkAvailability)
   const deleteBooking = useMutation(api.bookings.deleteBooking)
   const updateBookingMenu = useMutation(api.bookings.updateBookingMenu)
-  const updateEventSummary = useMutation(api.bookings.updateEventSummary)
 
   const [selectedBooking, setSelectedBooking] = useState<any>(null)
 
@@ -42,7 +41,7 @@ export default function ReservasAdminPage() {
   const [bookingToDelete, setBookingToDelete] = useState<any>(null)
   const [filterStatus, setFilterStatus] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState<"info" | "timeline" | "menu" | "tragos" | "resumen">("info")
+  const [activeTab, setActiveTab] = useState<"info" | "timeline" | "menu" | "tragos">("info")
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false)
 
   const [paymentData, setPaymentData] = useState({
@@ -70,9 +69,6 @@ export default function ReservasAdminPage() {
     },
   ])
 
-  const [editingSummary, setEditingSummary] = useState(false)
-  const [summaryText, setSummaryText] = useState("")
-  const [savingSummary, setSavingSummary] = useState(false)
 
   const filteredBookings = bookings?.filter((booking) => {
     const matchesStatus = filterStatus === "all" || booking.status === filterStatus
@@ -151,25 +147,6 @@ export default function ReservasAdminPage() {
     }
   }
 
-  const handleSaveSummary = async () => {
-    if (!selectedBooking) return
-
-    setSavingSummary(true)
-    try {
-      await updateEventSummary({
-        id: selectedBooking._id,
-        eventSummary: summaryText,
-      })
-      toast.success("Resumen guardado exitosamente")
-      setEditingSummary(false)
-      setSelectedBooking({ ...selectedBooking, eventSummary: summaryText })
-    } catch (error) {
-      console.error("Error al guardar resumen:", error)
-      toast.error("Error al guardar el resumen")
-    } finally {
-      setSavingSummary(false)
-    }
-  }
 
   const openBookingDetails = (booking: any) => {
     setSelectedBooking(booking)
@@ -193,9 +170,6 @@ export default function ReservasAdminPage() {
         },
       ])
     }
-    // Inicializar resumen del evento
-    setSummaryText(booking.eventSummary || "")
-    setEditingSummary(false)
     setDialogOpen(true)
   }
 
@@ -484,16 +458,6 @@ export default function ReservasAdminPage() {
                     }`}
                   >
                     Tragos
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("resumen")}
-                    className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                      activeTab === "resumen"
-                        ? "border-blue-600 text-blue-600"
-                        : "border-transparent text-gray-600 hover:text-gray-900"
-                    }`}
-                  >
-                    Resumen del Evento
                   </button>
                 </div>
               </div>
@@ -980,92 +944,6 @@ export default function ReservasAdminPage() {
               {/* Tab Content - Tragos */}
               {activeTab === "tragos" && (
                 <DrinkInventory bookingId={selectedBooking._id} />
-              )}
-
-              {/* Tab Content - Resumen del Evento */}
-              {activeTab === "resumen" && (
-                <div className="space-y-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Historial del Evento:</strong> Documenta aquí lo que sucedió en el evento: éxitos, observaciones,
-                      imprevistos, sugerencias de mejora para futuros eventos similares. Este resumen quedará guardado
-                      en el historial del evento para referencia futura.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                        <h4 className="font-semibold text-lg">Resumen del Evento</h4>
-                      </div>
-                      {!editingSummary ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingSummary(true)}
-                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Editar
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingSummary(false)
-                              setSummaryText(selectedBooking.eventSummary || "")
-                            }}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleSaveSummary}
-                            disabled={savingSummary}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {savingSummary ? "Guardando..." : "Guardar"}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-
-                    {editingSummary ? (
-                      <Textarea
-                        value={summaryText}
-                        onChange={(e) => setSummaryText(e.target.value)}
-                        placeholder="Escribe aquí el resumen del evento: cómo salió todo, qué funcionó bien, qué se puede mejorar, anécdotas destacadas, feedback del cliente, observaciones del equipo, etc."
-                        rows={15}
-                        className="w-full"
-                      />
-                    ) : (
-                      <div className="min-h-[200px] p-4 bg-gray-50 rounded border">
-                        {selectedBooking.eventSummary ? (
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                            {selectedBooking.eventSummary}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-gray-400 italic">
-                            No hay resumen registrado. Haz clic en "Editar" para agregar uno.
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {selectedBooking.status === "completed" && !selectedBooking.eventSummary && (
-                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                        <p className="text-sm text-amber-800">
-                          ℹ️ Este evento está marcado como completado. Te recomendamos agregar un resumen
-                          del evento para tener un registro completo en el historial.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
               )}
             </>
           )}
