@@ -273,7 +273,7 @@ function GenerateShoppingListForm({ onClose }: { onClose: () => void }) {
     const eventDate = new Date(booking.eventDate)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return eventDate >= today && booking.status !== "cancelled"
+    return eventDate >= today
   })
 
   return (

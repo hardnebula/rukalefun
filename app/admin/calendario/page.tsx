@@ -45,7 +45,6 @@ export default function CalendarioPage() {
   const events = useMemo(() => {
     const bookingEvents = bookings
       ? bookings
-          .filter((b) => b.status !== "cancelled")
           .map((booking) => {
             const eventDate = new Date(booking.eventDate)
             const [startHour, startMinute] = booking.startTime.split(":").map(Number)
@@ -155,7 +154,6 @@ export default function CalendarioPage() {
       pending: "bg-amber-500",
       confirmed: "bg-green-500",
       completed: "bg-blue-500",
-      cancelled: "bg-red-500",
     }
     return colors[status] || "bg-gray-500"
   }
@@ -165,7 +163,6 @@ export default function CalendarioPage() {
       pending: "Pendiente",
       confirmed: "Confirmado",
       completed: "Completado",
-      cancelled: "Cancelado",
     }
     return labels[status] || status
   }
@@ -184,7 +181,6 @@ export default function CalendarioPage() {
       pending: { backgroundColor: "#f59e0b" },
       confirmed: { backgroundColor: "#10b981" },
       completed: { backgroundColor: "#3b82f6" },
-      cancelled: { backgroundColor: "#ef4444" },
     }
     return {
       style: colors[status] || { backgroundColor: "#6b7280" },
@@ -221,10 +217,6 @@ export default function CalendarioPage() {
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 rounded bg-blue-500" />
                   <span className="text-sm">Completado</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded bg-red-500" />
-                  <span className="text-sm">Cancelado</span>
                 </div>
               </div>
             </div>
@@ -507,7 +499,7 @@ export default function CalendarioPage() {
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 italic bg-white/50 p-4 rounded-md text-center">
-                          No hay minuta registrada. Haz clic en "Agregar" para documentar los temas tratados en esta reunión.
+                          No hay minuta registrada. Haz clic en &ldquo;Agregar&rdquo; para documentar los temas tratados en esta reunion.
                         </p>
                       )}
                     </CardContent>

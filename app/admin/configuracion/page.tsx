@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,11 +33,14 @@ import {
   Clock,
   MessageSquare,
   ListChecks,
-  BarChart3
+  BarChart3,
+  Heart,
+  Save,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 
-type TabType = "dashboard" | "espacios" | "testimonios" | "guia"
+type TabType = "dashboard" | "espacios" | "testimonios" | "invitaciones" | "guia"
 
 export default function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard")
@@ -96,6 +100,17 @@ export default function ConfiguracionPage() {
           Testimonios
         </button>
         <button
+          onClick={() => setActiveTab("invitaciones")}
+          className={`px-4 py-2 font-medium transition-colors ${
+            activeTab === "invitaciones"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Heart className="inline-block w-4 h-4 mr-2" />
+          Invitaciones
+        </button>
+        <button
           onClick={() => setActiveTab("guia")}
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === "guia"
@@ -112,6 +127,7 @@ export default function ConfiguracionPage() {
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "espacios" && <EspaciosTab />}
       {activeTab === "testimonios" && <TestimoniosTab />}
+      {activeTab === "invitaciones" && <InvitacionesTab />}
       {activeTab === "guia" && <GuiaWorkflowTab />}
     </div>
   )
@@ -769,7 +785,7 @@ function TestimoniosTab() {
                   ))}
                 </div>
 
-                <p className="text-gray-700 italic">"{testimonial.comment}"</p>
+                <p className="text-gray-700 italic">&ldquo;{testimonial.comment}&rdquo;</p>
 
                 <p className="text-sm text-gray-500">
                   Evento:{" "}
@@ -925,6 +941,158 @@ function TestimoniosTab() {
       </Dialog>
     </div>
   )
+}
+
+// ============== TAB DE INVITACIONES ==============
+
+function InvitacionesTab() {
+  const price = useQuery(api.invitationSettings.getPrice);
+  const setPrice = useMutation(api.invitationSettings.setPrice);
+
+  const [priceInput, setPriceInput] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Initialize price input when data loads
+  useEffect(() => {
+    if (price !== undefined && priceInput === "") {
+      setPriceInput(price.toString());
+    }
+  }, [price, priceInput]);
+
+  const handleSavePrice = async () => {
+    const newPrice = parseInt(priceInput);
+    if (isNaN(newPrice) || newPrice < 0) {
+      toast.error("Ingresa un precio valido");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await setPrice({ price: newPrice });
+      toast.success("Precio actualizado correctamente");
+    } catch (error) {
+      toast.error("Error al guardar el precio");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Info Card */}
+      <Card className="border-pink-200 bg-pink-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-pink-800">
+            <Heart className="w-5 h-5" />
+            Invitaciones Digitales de Boda
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-pink-700">
+          <p className="text-sm">
+            Las invitaciones digitales son un servicio SaaS self-service. Los clientes pueden
+            crear sus invitaciones desde la pagina publica{" "}
+            <a href="/invitaciones" className="underline font-medium" target="_blank">
+              /invitaciones
+            </a>
+            .
+          </p>
+          <ul className="mt-3 space-y-1 text-sm">
+            <li>• <strong>Clientes con reserva confirmada:</strong> Acceso gratis automatico</li>
+            <li>• <strong>Clientes sin reserva:</strong> Deben pagar el precio configurado</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Price Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            Configuracion de Precio
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="price">Precio de Invitacion Digital (CLP)</Label>
+            <div className="flex items-center gap-3 mt-2">
+              <div className="relative flex-1 max-w-xs">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  value={priceInput}
+                  onChange={(e) => setPriceInput(e.target.value)}
+                  className="pl-8"
+                  placeholder="15000"
+                />
+              </div>
+              <Button
+                onClick={handleSavePrice}
+                disabled={isSaving}
+                className="bg-nature-forest hover:bg-nature-forest-dark"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Guardar
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Este es el precio que pagaran los clientes que no tengan reserva confirmada.
+              El precio actual es: <strong>${price?.toLocaleString("es-CL") || "15.000"} CLP</strong>
+            </p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-2">Nota sobre pagos</h4>
+            <p className="text-sm text-gray-600">
+              Actualmente los pagos se coordinan manualmente por WhatsApp. Una vez recibido
+              el pago, puedes marcar la invitacion como &quot;Pagada&quot; desde la seccion de
+              administracion de invitaciones.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Links */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Accesos Rapidos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <a href="/admin/invitaciones">
+                <Heart className="w-8 h-8 mb-2 text-pink-500" />
+                <span className="text-sm">Gestionar Invitaciones</span>
+              </a>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <a href="/invitaciones" target="_blank">
+                <Eye className="w-8 h-8 mb-2 text-blue-500" />
+                <span className="text-sm">Ver Pagina Publica</span>
+              </a>
+            </Button>
+            <Button variant="outline" className="h-auto flex-col py-4" asChild>
+              <a href="/invitaciones/crear" target="_blank">
+                <Plus className="w-8 h-8 mb-2 text-green-500" />
+                <span className="text-sm">Probar Creacion</span>
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 // ============== TAB DE GUÍA DE WORKFLOW ==============
@@ -1088,8 +1256,7 @@ function GuiaWorkflowTab() {
   const estadosReserva = [
     { estado: "pending", color: "bg-yellow-100 text-yellow-800", descripcion: "Requiere confirmación" },
     { estado: "confirmed", color: "bg-green-100 text-green-800", descripcion: "Confirmada y planificando" },
-    { estado: "completed", color: "bg-blue-100 text-blue-800", descripcion: "Evento completado" },
-    { estado: "cancelled", color: "bg-red-100 text-red-800", descripcion: "Cancelada" }
+    { estado: "completed", color: "bg-blue-100 text-blue-800", descripcion: "Evento completado" }
   ]
 
   const estadosCotizacion = [

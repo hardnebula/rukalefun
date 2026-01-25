@@ -52,13 +52,11 @@ export default function AdminDashboard() {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "outline",
       confirmed: "default",
-      cancelled: "destructive",
       completed: "secondary",
     }
     const labels: Record<string, string> = {
       pending: "Pendiente",
       confirmed: "Confirmado",
-      cancelled: "Cancelado",
       completed: "Completado",
     }
     return (

@@ -27,7 +27,7 @@ export default defineSchema({
     endTime: v.string(),
     numberOfGuests: v.number(),
     estimatedGuests: v.number(),
-    status: v.string(), // pending, confirmed, cancelled, completed
+    status: v.string(), // pending, confirmed, completed
     totalAmount: v.number(),
     depositPaid: v.number(),
     balanceRemaining: v.number(),
@@ -71,6 +71,7 @@ export default defineSchema({
     numberOfGuests: v.number(),
     message: v.optional(v.string()),
     status: v.string(), // new, contacted, quoted, converted, declined
+    source: v.optional(v.string()), // "web" | "whatsapp" - origen de la solicitud
     createdAt: v.number(),
   }).index("by_status", ["status"]),
 
@@ -105,6 +106,7 @@ export default defineSchema({
     status: v.string(), // pending, converted, declined, expired
     bookingId: v.optional(v.id("bookings")), // Si se convirtió en reserva
     convertedAt: v.optional(v.number()), // Fecha de conversión
+    expiresAt: v.optional(v.number()), // Fecha de expiración (2 semanas después de creación)
 
     // Metadata
     generatedBy: v.optional(v.string()), // Admin que generó
@@ -122,6 +124,7 @@ export default defineSchema({
     name: v.string(), // nombre de la plantilla, ej: "Paseo Familiar", "Boda Premium"
     eventType: v.string(), // tipo de evento
     isActive: v.boolean(),
+    isDefault: v.optional(v.boolean()), // plantilla por defecto para cotización rápida
 
     // Servicios incluidos
     includedServices: v.array(v.string()),
@@ -283,16 +286,20 @@ export default defineSchema({
   // Asignación de invitados a mesas por evento
   tableAssignments: defineTable({
     bookingId: v.id("bookings"), // Evento/reserva
-    tableId: v.id("tables"), // Mesa asignada
+    tableId: v.optional(v.id("tables")), // Mesa asignada (opcional - puede estar sin asignar)
     guestName: v.string(), // Nombre del invitado
     dietaryRestrictions: v.optional(v.string()), // Restricciones alimentarias
     isConfirmed: v.boolean(), // Si el invitado confirmó asistencia
     notes: v.optional(v.string()),
+    // Tracking de origen (importación desde RSVP)
+    sourceRsvpId: v.optional(v.id("weddingRsvps")),
+    guestIndex: v.optional(v.number()), // 0=principal, 1,2,3...=acompañantes
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_booking", ["bookingId"])
     .index("by_table", ["tableId"])
-    .index("by_booking_and_table", ["bookingId", "tableId"]),
+    .index("by_booking_and_table", ["bookingId", "tableId"])
+    .index("by_source_rsvp", ["sourceRsvpId"]),
 
   // Inventario de tragos de clientes (botellas que traen los novios)
   drinkInventory: defineTable({
@@ -432,6 +439,138 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_booking", ["bookingId"])
     .index("by_status", ["status"]),
+
+  // Invitaciones de boda
+  weddingInvitations: defineTable({
+    // Identificadores
+    slug: v.string(), // URL publica: /invitacion/javier-francisca
+    accessCode: v.string(), // Codigo para editar (6 caracteres)
+    ownerEmail: v.string(), // Email de los novios
+
+    // Info pareja
+    person1Name: v.string(),
+    person2Name: v.string(),
+
+    // Fecha del evento
+    eventDate: v.string(),
+
+    // Plantilla seleccionada
+    templateId: v.string(), // "classic" | "romantic" | "modern"
+
+    // Textos personalizables
+    welcomeText: v.optional(v.string()),
+    loveQuote: v.optional(v.string()),
+    loveQuoteAuthor: v.optional(v.string()),
+
+    // Ceremonia
+    ceremonyDate: v.string(),
+    ceremonyTime: v.string(),
+    ceremonyLocation: v.string(),
+    ceremonyAddress: v.string(),
+    ceremonyMapsUrl: v.optional(v.string()),
+
+    // Celebracion
+    celebrationDate: v.optional(v.string()),
+    celebrationTime: v.optional(v.string()),
+    celebrationLocation: v.optional(v.string()),
+    celebrationAddress: v.optional(v.string()),
+    celebrationMapsUrl: v.optional(v.string()),
+
+    // Galeria (Convex Storage IDs)
+    photos: v.array(v.object({
+      storageId: v.id("_storage"),
+      caption: v.optional(v.string()),
+      order: v.number(),
+    })),
+
+    // Fiesta
+    dressCode: v.optional(v.string()),
+    dressCodeDescription: v.optional(v.string()),
+    additionalNotes: v.optional(v.string()),
+
+    // RSVP
+    rsvpEnabled: v.boolean(),
+    rsvpDeadline: v.optional(v.string()),
+    rsvpMessage: v.optional(v.string()),
+
+    // Lista de regalos
+    giftRegistryEnabled: v.optional(v.boolean()),
+    giftRegistryTitle: v.optional(v.string()), // Ej: "Mesa de Regalos"
+    giftRegistryMessage: v.optional(v.string()), // Mensaje personalizado
+    giftRegistryLinks: v.optional(v.array(v.object({
+      name: v.string(), // Ej: "Novios Falabella", "Novios Paris", "Transferencia"
+      url: v.optional(v.string()), // URL del registro
+      description: v.optional(v.string()), // Info adicional (ej: datos bancarios)
+    }))),
+
+    // Colores personalizados (override de plantilla)
+    customColors: v.optional(v.object({
+      primary: v.string(),
+      secondary: v.string(),
+      background: v.string(),
+      text: v.string(),
+    })),
+
+    // Vinculacion con booking (opcional)
+    bookingId: v.optional(v.id("bookings")),
+
+    // === CAMPOS PARA MODELO SAAS ===
+    // Estado de pago
+    isPaid: v.boolean(), // true si pago o tiene reserva gratis
+    paymentStatus: v.optional(v.union(
+      v.literal("pending"),      // Esperando pago
+      v.literal("paid"),         // Pagado
+      v.literal("free_booking")  // Gratis por tener reserva
+    )),
+    paymentAmount: v.optional(v.number()),  // Monto pagado (si aplica)
+    paymentDate: v.optional(v.number()),    // Timestamp del pago
+    linkedBookingId: v.optional(v.id("bookings")), // Reserva que otorga acceso gratis
+
+    // Metadata
+    isActive: v.boolean(),
+    isPublished: v.boolean(), // Visible publicamente
+    viewCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_access_code", ["accessCode"])
+    .index("by_owner_email", ["ownerEmail"])
+    .index("by_booking", ["bookingId"])
+    .index("by_payment_status", ["paymentStatus"]),
+
+  // Configuracion de invitaciones (precios, etc)
+  invitationSettings: defineTable({
+    key: v.string(),        // "price", "currency", etc.
+    value: v.string(),      // Valor de la configuracion
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
+  // RSVPs de invitados
+  weddingRsvps: defineTable({
+    invitationId: v.id("weddingInvitations"),
+    guestName: v.string(),
+    guestEmail: v.optional(v.string()),
+    guestPhone: v.optional(v.string()),
+    numberOfGuests: v.number(),
+    willAttend: v.boolean(),
+    dietaryRestrictions: v.optional(v.string()),
+    message: v.optional(v.string()),
+    createdAt: v.number(),
+    // Tracking de importación a mesas
+    importedToTables: v.optional(v.boolean()),
+    importedAt: v.optional(v.number()),
+    tableAssignmentIds: v.optional(v.array(v.id("tableAssignments"))),
+  }).index("by_invitation", ["invitationId"]),
+
+  // Sugerencias de canciones de invitados
+  songSuggestions: defineTable({
+    invitationId: v.id("weddingInvitations"),
+    guestName: v.string(),
+    songTitle: v.string(),
+    artist: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_invitation", ["invitationId"]),
 
   // Reuniones con clientes
   meetings: defineTable({

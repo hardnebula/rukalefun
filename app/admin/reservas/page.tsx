@@ -177,13 +177,11 @@ export default function ReservasAdminPage() {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: "outline",
       confirmed: "default",
-      cancelled: "destructive",
       completed: "secondary",
     }
     const labels: Record<string, string> = {
       pending: "Pendiente",
       confirmed: "Confirmado",
-      cancelled: "Cancelado",
       completed: "Completado",
     }
     return (
@@ -258,7 +256,6 @@ export default function ReservasAdminPage() {
                 <option value="pending">Pendiente</option>
                 <option value="confirmed">Confirmado</option>
                 <option value="completed">Completado</option>
-                <option value="cancelled">Cancelado</option>
               </select>
             </div>
           </div>
@@ -476,7 +473,6 @@ export default function ReservasAdminPage() {
                     <option value="pending">Pendiente</option>
                     <option value="confirmed">Confirmado</option>
                     <option value="completed">Completado</option>
-                    <option value="cancelled">Cancelado</option>
                   </select>
                 </div>
 
@@ -943,7 +939,10 @@ export default function ReservasAdminPage() {
 
               {/* Tab Content - Tragos */}
               {activeTab === "tragos" && (
-                <DrinkInventory bookingId={selectedBooking._id} />
+                <DrinkInventory
+                  bookingId={selectedBooking._id}
+                  guestAccessCode={selectedBooking.guestAccessCode}
+                />
               )}
             </>
           )}
