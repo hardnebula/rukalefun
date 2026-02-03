@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Menu, X, Calendar, Image as ImageIcon, Home, Mail } from "lucide-react"
+import { Menu, X, Calendar, Image as ImageIcon, Home, Mail, Heart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
@@ -22,8 +22,9 @@ export default function Navbar() {
   const navLinks = [
     { href: "/", label: "Inicio", icon: Home },
     { href: "/espacios", label: "Espacios", icon: Home },
-    { href: "/galeria", label: "Galería", icon: ImageIcon },
+    { href: "/galeria", label: "Galeria", icon: ImageIcon },
     { href: "/reservas", label: "Cotizaciones", icon: Calendar },
+    { href: "/invitaciones", label: "Invitaciones", icon: Heart },
     { href: "/contacto", label: "Contacto", icon: Mail },
   ]
 

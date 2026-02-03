@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { createPortal } from "react-dom"
+import { Slot } from "@radix-ui/react-slot"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 
@@ -134,12 +135,15 @@ DialogDescription.displayName = "DialogDescription"
 
 const DialogTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, ...props }, ref) => (
-  <button ref={ref} {...props}>
-    {children}
-  </button>
-))
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
+>(({ children, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button"
+  return (
+    <Comp ref={ref} {...props}>
+      {children}
+    </Comp>
+  )
+})
 DialogTrigger.displayName = "DialogTrigger"
 
 export {

@@ -3,6 +3,64 @@ import { mutation, query } from "./_generated/server";
 
 // ===== QUERIES =====
 
+// Obtener RSVPs pendientes de importar para un booking (via invitación vinculada)
+export const getPendingRsvpsForImport = query({
+  args: { bookingId: v.id("bookings") },
+  handler: async (ctx, args) => {
+    // Buscar invitación vinculada a este booking
+    const invitation = await ctx.db
+      .query("weddingInvitations")
+      .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+      .first();
+
+    if (!invitation) {
+      return { invitation: null, rsvps: [], summary: null };
+    }
+
+    // Obtener todos los RSVPs de esta invitación
+    const allRsvps = await ctx.db
+      .query("weddingRsvps")
+      .withIndex("by_invitation", (q) => q.eq("invitationId", invitation._id))
+      .collect();
+
+    // Filtrar solo los que confirmaron asistencia y no han sido importados
+    const pendingRsvps = allRsvps.filter(
+      (rsvp) => rsvp.willAttend && !rsvp.importedToTables
+    );
+
+    // Calcular resumen
+    const totalConfirmed = allRsvps.filter((r) => r.willAttend).length;
+    const totalGuests = allRsvps
+      .filter((r) => r.willAttend)
+      .reduce((sum, r) => sum + r.numberOfGuests, 0);
+    const alreadyImported = allRsvps.filter(
+      (r) => r.willAttend && r.importedToTables
+    ).length;
+    const pendingToImport = pendingRsvps.length;
+    const pendingGuestCount = pendingRsvps.reduce(
+      (sum, r) => sum + r.numberOfGuests,
+      0
+    );
+
+    return {
+      invitation: {
+        _id: invitation._id,
+        person1Name: invitation.person1Name,
+        person2Name: invitation.person2Name,
+        slug: invitation.slug,
+      },
+      rsvps: pendingRsvps,
+      summary: {
+        totalConfirmed,
+        totalGuests,
+        alreadyImported,
+        pendingToImport,
+        pendingGuestCount,
+      },
+    };
+  },
+});
+
 // Obtener todas las mesas
 export const getAllTables = query({
   handler: async (ctx) => {
@@ -310,6 +368,170 @@ export const autoAssignGuests = mutation({
     return {
       message: `${assignments.length} invitados asignados automáticamente`,
       assignments: assignments.length,
+    };
+  },
+});
+
+// Importar RSVPs confirmados a asignaciones de mesas
+export const importRsvpsToTables = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+    rsvpIds: v.array(v.id("weddingRsvps")),
+    autoAssign: v.optional(v.boolean()), // Si true, asigna automáticamente a mesas
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const createdAssignments: any[] = [];
+    const rsvpUpdates: { rsvpId: string; assignmentIds: string[] }[] = [];
+
+    // Obtener mesas activas si se va a auto-asignar
+    let tables: any[] = [];
+    let tableOccupancy: Map<string, number> = new Map();
+
+    if (args.autoAssign) {
+      tables = await ctx.db
+        .query("tables")
+        .filter((q) => q.eq(q.field("isActive"), true))
+        .order("asc")
+        .collect();
+
+      // Calcular ocupación actual de cada mesa
+      for (const table of tables) {
+        const assignments = await ctx.db
+          .query("tableAssignments")
+          .withIndex("by_booking_and_table", (q) =>
+            q.eq("bookingId", args.bookingId).eq("tableId", table._id)
+          )
+          .collect();
+        tableOccupancy.set(table._id, assignments.length);
+      }
+    }
+
+    // Función para encontrar mesa con espacio disponible
+    const findAvailableTable = (): any | null => {
+      for (const table of tables) {
+        const occupied = tableOccupancy.get(table._id) || 0;
+        if (occupied < table.capacity) {
+          return table;
+        }
+      }
+      return null;
+    };
+
+    // Procesar cada RSVP
+    for (const rsvpId of args.rsvpIds) {
+      const rsvp = await ctx.db.get(rsvpId);
+      if (!rsvp) continue;
+
+      // Verificar que no haya sido importado ya
+      if (rsvp.importedToTables) {
+        continue;
+      }
+
+      const assignmentIds: any[] = [];
+
+      // Crear asignación para el invitado principal
+      const mainAssignment = {
+        bookingId: args.bookingId,
+        tableId: args.autoAssign ? findAvailableTable()?._id : undefined,
+        guestName: rsvp.guestName,
+        dietaryRestrictions: rsvp.dietaryRestrictions,
+        isConfirmed: true, // Viene de RSVP confirmado
+        notes: rsvp.message ? `Mensaje RSVP: ${rsvp.message}` : undefined,
+        sourceRsvpId: rsvpId,
+        guestIndex: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const mainId = await ctx.db.insert("tableAssignments", mainAssignment);
+      assignmentIds.push(mainId);
+      createdAssignments.push(mainId);
+
+      // Actualizar ocupación si se asignó a mesa
+      if (mainAssignment.tableId) {
+        const currentOccupancy = tableOccupancy.get(mainAssignment.tableId) || 0;
+        tableOccupancy.set(mainAssignment.tableId, currentOccupancy + 1);
+      }
+
+      // Crear asignaciones para acompañantes (numberOfGuests - 1)
+      for (let i = 1; i < rsvp.numberOfGuests; i++) {
+        const companionAssignment = {
+          bookingId: args.bookingId,
+          tableId: args.autoAssign ? findAvailableTable()?._id : undefined,
+          guestName: `Acompañante ${i} de ${rsvp.guestName}`,
+          dietaryRestrictions: undefined,
+          isConfirmed: true,
+          notes: `Acompañante de ${rsvp.guestName}`,
+          sourceRsvpId: rsvpId,
+          guestIndex: i,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        const companionId = await ctx.db.insert("tableAssignments", companionAssignment);
+        assignmentIds.push(companionId);
+        createdAssignments.push(companionId);
+
+        // Actualizar ocupación
+        if (companionAssignment.tableId) {
+          const currentOccupancy = tableOccupancy.get(companionAssignment.tableId) || 0;
+          tableOccupancy.set(companionAssignment.tableId, currentOccupancy + 1);
+        }
+      }
+
+      // Marcar RSVP como importado
+      await ctx.db.patch(rsvpId, {
+        importedToTables: true,
+        importedAt: now,
+        tableAssignmentIds: assignmentIds,
+      });
+
+      rsvpUpdates.push({ rsvpId, assignmentIds });
+    }
+
+    return {
+      success: true,
+      message: `${createdAssignments.length} invitados importados desde ${rsvpUpdates.length} RSVPs`,
+      totalGuests: createdAssignments.length,
+      rsvpsProcessed: rsvpUpdates.length,
+      assignmentIds: createdAssignments,
+    };
+  },
+});
+
+// Revertir importación de un RSVP (elimina asignaciones y marca como no importado)
+export const revertRsvpImport = mutation({
+  args: { rsvpId: v.id("weddingRsvps") },
+  handler: async (ctx, args) => {
+    const rsvp = await ctx.db.get(args.rsvpId);
+    if (!rsvp) {
+      throw new Error("RSVP no encontrado");
+    }
+
+    if (!rsvp.importedToTables || !rsvp.tableAssignmentIds) {
+      throw new Error("Este RSVP no ha sido importado");
+    }
+
+    // Eliminar todas las asignaciones vinculadas
+    for (const assignmentId of rsvp.tableAssignmentIds) {
+      try {
+        await ctx.db.delete(assignmentId);
+      } catch {
+        // Ignorar si ya fue eliminado manualmente
+      }
+    }
+
+    // Marcar RSVP como no importado
+    await ctx.db.patch(args.rsvpId, {
+      importedToTables: false,
+      importedAt: undefined,
+      tableAssignmentIds: undefined,
+    });
+
+    return {
+      success: true,
+      message: "Importación revertida correctamente",
     };
   },
 });

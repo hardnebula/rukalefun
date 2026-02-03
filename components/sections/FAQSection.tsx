@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { FAQSchema } from "@/components/seo/StructuredData"
 
 interface FAQItem {
   question: string
@@ -53,17 +54,20 @@ export default function FAQSection() {
   }
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50" aria-labelledby="faq-heading">
+      {/* FAQ Schema para rich snippets en Google */}
+      <FAQSchema faqs={faqs} />
+
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-nature-forest/10 rounded-full mb-4">
             <HelpCircle className="h-8 w-8 text-nature-forest" />
           </div>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 id="faq-heading" className="text-4xl font-bold text-gray-900 mb-4">
             Preguntas Frecuentes
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Encuentra respuestas a las preguntas más comunes sobre nuestros servicios y espacios
+            Todo lo que necesitas saber sobre matrimonios y eventos en Ruka Lefún
           </p>
         </div>
 

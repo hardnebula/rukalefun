@@ -72,6 +72,10 @@ const config = {
           stone: "#64748B",
         },
       },
+      fontFamily: {
+        serif: ['var(--font-playfair)', 'Georgia', 'serif'],
+        script: ['var(--font-script)', 'cursive'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

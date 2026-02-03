@@ -38,6 +38,11 @@ next-env.d.ts
 # convex
 .convex
 
+# claude temp files
+tmpclaude-*
+nul
+.claude/settings.local.json
+
 
 
 

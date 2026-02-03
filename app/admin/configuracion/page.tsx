@@ -23,16 +23,6 @@ import {
   Calendar,
   Package,
   BookOpen,
-  ClipboardList,
-  FileText,
-  CheckCircle,
-  ShoppingCart,
-  PartyPopper,
-  CheckCheck,
-  ArrowRight,
-  Clock,
-  MessageSquare,
-  ListChecks,
   BarChart3,
   Heart,
   Save,
@@ -865,7 +855,7 @@ function TestimoniosTab() {
                   setFormData({ ...formData, eventType: e.target.value })
                 }
                 required
-                placeholder="Ej: Boda, Evento Corporativo"
+                placeholder="Ej: Matrimonio, Evento Corporativo"
               />
             </div>
 
@@ -985,7 +975,7 @@ function InvitacionesTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-pink-800">
             <Heart className="w-5 h-5" />
-            Invitaciones Digitales de Boda
+            Invitaciones Digitales de Matrimonio
           </CardTitle>
         </CardHeader>
         <CardContent className="text-pink-700">
@@ -1098,326 +1088,115 @@ function InvitacionesTab() {
 // ============== TAB DE GUÍA DE WORKFLOW ==============
 
 function GuiaWorkflowTab() {
-  const workflowSteps = [
-    {
-      number: 1,
-      title: "Captación del Cliente",
-      icon: ClipboardList,
-      description: "El cliente completa el formulario de solicitud de cotización en la web",
-      actions: [
-        "Sistema guarda solicitud con estado 'new'",
-        "Dashboard muestra alerta de nueva cotización",
-        "Información capturada: tipo de evento, fecha, invitados, servicios deseados"
-      ],
-      location: "/admin/cotizaciones",
-      color: "bg-blue-50 border-blue-200 text-blue-900"
-    },
-    {
-      number: 2,
-      title: "Generación de Cotización",
-      icon: FileText,
-      description: "Admin responde la solicitud y genera cotización profesional",
-      actions: [
-        "Marcar solicitud como 'contactado'",
-        "Seleccionar plantilla según tipo de evento",
-        "Personalizar servicios, menú y precios",
-        "Sistema genera cotización automáticamente",
-        "Estado: 'pending' (esperando respuesta del cliente)"
-      ],
-      location: "/admin/cotizaciones",
-      color: "bg-purple-50 border-purple-200 text-purple-900"
-    },
-    {
-      number: 3,
-      title: "Conversión a Reserva",
-      icon: CheckCircle,
-      description: "Cliente acepta → Admin convierte cotización a reserva confirmada",
-      actions: [
-        "Click en 'Convertir a Reserva'",
-        "Sistema transfiere automáticamente: menú, cliente, servicios",
-        "Estado inicial: 'pending' (requiere confirmación final)",
-        "Vinculación automática: cotización ↔ reserva"
-      ],
-      location: "/admin/reservas",
-      color: "bg-green-50 border-green-200 text-green-900"
-    },
-    {
-      number: 4,
-      title: "Confirmación y Configuración",
-      icon: Settings,
-      description: "Admin confirma la reserva y configura información de pago",
-      actions: [
-        "Verificar disponibilidad de fecha/espacio",
-        "Registrar monto total del evento",
-        "Registrar anticipo recibido",
-        "Sistema calcula saldo pendiente automáticamente",
-        "Cambiar estado a 'confirmed'",
-        "Reserva aparece en calendario (color verde)"
-      ],
-      location: "/admin/reservas",
-      color: "bg-emerald-50 border-emerald-200 text-emerald-900"
-    },
-    {
-      number: 5,
-      title: "Reuniones de Planificación",
-      icon: Calendar,
-      description: "Programar y documentar reuniones con el cliente",
-      actions: [
-        "Crear reunión vinculada a la reserva",
-        "Tipos: 'Consulta Inicial' o 'Planificación del Evento'",
-        "Definir fecha, hora, ubicación y agenda",
-        "Después de reunión: registrar MINUTA",
-        "Minuta incluye: temas tratados, acuerdos, próximos pasos",
-        "Aparece en calendario con 📝 si tiene minuta"
-      ],
-      location: "/admin/reuniones",
-      color: "bg-indigo-50 border-indigo-200 text-indigo-900"
-    },
-    {
-      number: 6,
-      title: "Configuración Detallada",
-      icon: ListChecks,
-      description: "Configurar menú, cronograma y detalles específicos del evento",
-      actions: [
-        "Tab 'Menú': Editar/refinar platos por secciones",
-        "Tab 'Cronograma': Programar actividades con horarios",
-        "Ejemplos: Recepción 18:00, Ceremonia 19:00, Cena 20:00",
-        "Actualizar servicios contratados si hay cambios",
-        "Registrar notas y solicitudes especiales"
-      ],
-      location: "/admin/reservas",
-      color: "bg-amber-50 border-amber-200 text-amber-900"
-    },
-    {
-      number: 7,
-      title: "Lista de Compras",
-      icon: ShoppingCart,
-      description: "Generar lista de compras con análisis automático de IA",
-      actions: [
-        "Crear lista desde la reserva",
-        "Sistema analiza menú: ingredientes y cantidades",
-        "IA audita: 🟢 OK / 🟡 Mejoras / 🔴 Problemas",
-        "Registrar proveedores y costos",
-        "Estados: draft → pending → sent → completed"
-      ],
-      location: "/admin/listas-compras",
-      color: "bg-orange-50 border-orange-200 text-orange-900"
-    },
-    {
-      number: 8,
-      title: "Asignación de Personal",
-      icon: Users,
-      description: "Asignar personal necesario para el evento",
-      actions: [
-        "Asignar: garzones, cocineros, DJ, decorador, etc.",
-        "Definir horarios de trabajo (inicio - fin)",
-        "Registrar montos a pagar",
-        "Personal confirma asistencia",
-        "Sistema calcula total de pagos automáticamente"
-      ],
-      location: "/admin/recursos",
-      color: "bg-pink-50 border-pink-200 text-pink-900"
-    },
-    {
-      number: 9,
-      title: "Ejecución del Evento",
-      icon: PartyPopper,
-      description: "Día del evento - Admin tiene acceso a toda la información",
-      actions: [
-        "Revisar cronograma completo",
-        "Verificar personal asignado y presente",
-        "Confirmar lista de compras verificada",
-        "Actualizar notas en tiempo real si hay cambios",
-        "Supervisar ejecución según plan"
-      ],
-      location: "/admin/calendario",
-      color: "bg-rose-50 border-rose-200 text-rose-900"
-    },
-    {
-      number: 10,
-      title: "Post-Evento y Cierre",
-      icon: CheckCheck,
-      description: "Finalizar el evento y cerrar todos los pendientes",
-      actions: [
-        "Marcar reserva como 'completed'",
-        "Registrar RESUMEN del evento (tab Resumen del Evento)",
-        "Documentar: éxitos, observaciones, mejoras, feedback",
-        "Confirmar pagos a personal (pending → paid)",
-        "Registrar método y fecha de pago",
-        "Cerrar lista de compras con costos reales",
-        "Solicitar testimonios del cliente (opcional)",
-        "Evento guardado en Historial con resumen completo ✓"
-      ],
-      location: "/admin/reservas → /admin/historial",
-      color: "bg-teal-50 border-teal-200 text-teal-900"
-    }
-  ]
-
-  const estadosReserva = [
-    { estado: "pending", color: "bg-yellow-100 text-yellow-800", descripcion: "Requiere confirmación" },
-    { estado: "confirmed", color: "bg-green-100 text-green-800", descripcion: "Confirmada y planificando" },
-    { estado: "completed", color: "bg-blue-100 text-blue-800", descripcion: "Evento completado" }
-  ]
-
-  const estadosCotizacion = [
-    { estado: "new", color: "bg-blue-100 text-blue-800", descripcion: "Recién recibida" },
-    { estado: "contacted", color: "bg-purple-100 text-purple-800", descripcion: "Cliente contactado" },
-    { estado: "quoted", color: "bg-indigo-100 text-indigo-800", descripcion: "Cotización enviada" },
-    { estado: "converted", color: "bg-green-100 text-green-800", descripcion: "Convertida a reserva" },
-    { estado: "declined", color: "bg-red-100 text-red-800", descripcion: "Cliente rechazó" }
+  const pasos = [
+    { num: 1, titulo: "Solicitud", desc: "Cliente solicita cotización", ubicacion: "Cotizaciones" },
+    { num: 2, titulo: "Cotización", desc: "Generar y enviar cotización", ubicacion: "Cotizaciones" },
+    { num: 3, titulo: "Reserva", desc: "Convertir cotización aceptada", ubicacion: "Reservas" },
+    { num: 4, titulo: "Confirmación", desc: "Confirmar y registrar pagos", ubicacion: "Reservas" },
+    { num: 5, titulo: "Planificación", desc: "Reuniones y configuración", ubicacion: "Reuniones" },
+    { num: 6, titulo: "Preparación", desc: "Lista de compras y personal", ubicacion: "Listas / Personal" },
+    { num: 7, titulo: "Evento", desc: "Ejecución del evento", ubicacion: "Calendario" },
+    { num: 8, titulo: "Cierre", desc: "Completar y documentar", ubicacion: "Historial" },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Resumen Visual */}
-      <Card className="border-2 border-nature-forest">
-        <CardHeader className="bg-nature-forest text-white">
+      {/* Flujo Principal */}
+      <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-6 h-6" />
-            Resumen del Flujo
+            <BarChart3 className="w-5 h-5" />
+            Flujo de Trabajo
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-            <Badge variant="outline" className="px-3 py-1">📋 Solicitud</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">💼 Cotización</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">✅ Reserva</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">🎯 Confirmación</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">📅 Reuniones</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">🔧 Configuración</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">📦 Lista Compras</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">👥 Personal</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">🎉 Evento</Badge>
-            <ArrowRight className="w-4 h-4 text-gray-400" />
-            <Badge variant="outline" className="px-3 py-1">✔️ Cierre</Badge>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {pasos.map((paso) => (
+              <div
+                key={paso.num}
+                className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-nature-forest text-white text-xs flex items-center justify-center font-bold">
+                    {paso.num}
+                  </span>
+                  <span className="font-medium text-sm">{paso.titulo}</span>
+                </div>
+                <p className="text-xs text-gray-600">{paso.desc}</p>
+                <p className="text-xs text-gray-400 mt-1">{paso.ubicacion}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Estados del Sistema */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Estados */}
+      <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="w-5 h-5 text-nature-forest" />
-              Estados de Reserva
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Estados de Reserva</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {estadosReserva.map((item) => (
-              <div key={item.estado} className="flex items-center justify-between p-2 border rounded">
-                <Badge className={item.color}>{item.estado}</Badge>
-                <span className="text-sm text-gray-600">{item.descripcion}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-yellow-100 text-yellow-800">pending</Badge>
+              <span className="text-gray-600">Por confirmar</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-green-100 text-green-800">confirmed</Badge>
+              <span className="text-gray-600">Confirmada</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-blue-100 text-blue-800">completed</Badge>
+              <span className="text-gray-600">Completada</span>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-nature-forest" />
-              Estados de Cotización
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Estados de Cotización</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {estadosCotizacion.map((item) => (
-              <div key={item.estado} className="flex items-center justify-between p-2 border rounded">
-                <Badge className={item.color}>{item.estado}</Badge>
-                <span className="text-sm text-gray-600">{item.descripcion}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-blue-100 text-blue-800">new</Badge>
+              <span className="text-gray-600">Nueva</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-purple-100 text-purple-800">contacted</Badge>
+              <span className="text-gray-600">Contactado</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-green-100 text-green-800">converted</Badge>
+              <span className="text-gray-600">Convertida</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-red-100 text-red-800">declined</Badge>
+              <span className="text-gray-600">Rechazada</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Pasos del Workflow */}
-      <div className="space-y-6">
-        <h3 className="text-xl font-bold text-gray-900">Pasos Detallados</h3>
-
-        {workflowSteps.map((step) => {
-          const Icon = step.icon
-          return (
-            <Card key={step.number} className={`border-2 ${step.color.replace('bg-', 'border-').replace('-50', '-200')}`}>
-              <CardHeader className={step.color}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center font-bold text-lg">
-                      {step.number}
-                    </div>
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Icon className="w-5 h-5" />
-                        {step.title}
-                      </CardTitle>
-                      <p className="text-sm mt-1 opacity-90">{step.description}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="bg-white">
-                    {step.location}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <ul className="space-y-2">
-                  {step.actions.map((action, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-nature-forest mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-700">{action}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* Información Adicional */}
-      <Card className="bg-gray-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-nature-forest" />
-            Puntos Clave del Sistema
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">🔗 Vinculación Automática</h4>
-            <p className="text-sm text-gray-600">Las cotizaciones, reservas y reuniones se vinculan automáticamente. El menú y los datos del cliente se transfieren sin necesidad de re-ingresarlos.</p>
-          </div>
-
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">🤖 Inteligencia Artificial</h4>
-            <p className="text-sm text-gray-600">El sistema usa IA para analizar listas de compras, generar sugerencias y auditar la operacionalidad de los eventos.</p>
-          </div>
-
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">💰 Cálculos Automáticos</h4>
-            <p className="text-sm text-gray-600">Saldos pendientes, totales de pagos a personal y costos de compras se calculan automáticamente en tiempo real.</p>
-          </div>
-
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">📅 Calendario Centralizado</h4>
-            <p className="text-sm text-gray-600">Todas las reservas y reuniones aparecen en un calendario único con códigos de color según estado y tipo.</p>
-          </div>
-
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">📝 Minutas de Reunión</h4>
-            <p className="text-sm text-gray-600">Cada reunión puede documentarse con minutas detalladas: temas tratados, acuerdos alcanzados y próximos pasos.</p>
-          </div>
-
-          <div className="p-3 bg-white rounded border">
-            <h4 className="font-semibold text-sm mb-1">📄 Historial de Eventos</h4>
-            <p className="text-sm text-gray-600">Todos los eventos completados se guardan con resúmenes detallados: qué funcionó bien, qué mejorar, feedback del cliente y observaciones del equipo para referencia futura.</p>
+      {/* Tips */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="pt-4">
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="font-medium text-blue-900 mb-1">Automatizaciones</p>
+              <ul className="text-blue-800 space-y-1">
+                <li>• Menú se transfiere de cotización a reserva</li>
+                <li>• Saldos se calculan automáticamente</li>
+                <li>• IA analiza listas de compras</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium text-blue-900 mb-1">Recomendaciones</p>
+              <ul className="text-blue-800 space-y-1">
+                <li>• Registrar minutas después de reuniones</li>
+                <li>• Completar resumen al finalizar evento</li>
+                <li>• Solicitar testimonios a clientes</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>

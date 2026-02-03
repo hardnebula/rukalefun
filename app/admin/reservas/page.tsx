@@ -1133,7 +1133,7 @@ function CreateBookingForm({ onClose, createBooking, checkAvailability }: any) {
               required
             >
               <option value="">Seleccionar tipo</option>
-              <option value="Boda">Boda</option>
+              <option value="Matrimonio">Matrimonio</option>
               <option value="Cumpleaños">Cumpleaños</option>
               <option value="Evento Corporativo">Evento Corporativo</option>
               <option value="Aniversario">Aniversario</option>

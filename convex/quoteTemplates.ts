@@ -124,3 +124,43 @@ export const toggleActive = mutation({
     });
   },
 });
+
+// Obtener plantilla por defecto (para cotización rápida)
+export const getDefaultTemplate = query({
+  handler: async (ctx) => {
+    // Buscar plantilla marcada como default y activa
+    const allTemplates = await ctx.db
+      .query("quoteTemplates")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .collect();
+
+    const defaultTemplate = allTemplates.find(t => t.isDefault === true);
+
+    // Si no hay default, retornar la primera activa
+    if (!defaultTemplate && allTemplates.length > 0) {
+      return allTemplates[0];
+    }
+
+    return defaultTemplate || null;
+  },
+});
+
+// Establecer plantilla como default
+export const setAsDefault = mutation({
+  args: { id: v.id("quoteTemplates") },
+  handler: async (ctx, args) => {
+    // Quitar default de todas las plantillas
+    const allTemplates = await ctx.db.query("quoteTemplates").collect();
+    for (const template of allTemplates) {
+      if (template.isDefault) {
+        await ctx.db.patch(template._id, { isDefault: false });
+      }
+    }
+
+    // Establecer la nueva como default
+    await ctx.db.patch(args.id, {
+      isDefault: true,
+      updatedAt: Date.now(),
+    });
+  },
+});

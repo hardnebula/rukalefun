@@ -31,6 +31,8 @@ export const createGeneratedQuote = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000; // 2 semanas en milisegundos
+    const expiresAt = now + twoWeeksInMs;
 
     const quoteId = await ctx.db.insert("generatedQuotes", {
       quoteRequestId: args.quoteRequestId,
@@ -50,6 +52,7 @@ export const createGeneratedQuote = mutation({
       totalAmount: args.totalAmount,
       currency: args.currency,
       status: "pending",
+      expiresAt: expiresAt, // Expira en 2 semanas
       generatedBy: args.generatedBy,
       notes: args.notes,
       createdAt: now,
@@ -67,11 +70,53 @@ export const createGeneratedQuote = mutation({
   },
 });
 
-// Obtener todas las cotizaciones generadas
+// Obtener todas las cotizaciones generadas (incluye días restantes para expirar)
 export const getAllGeneratedQuotes = query({
   handler: async (ctx) => {
     const quotes = await ctx.db.query("generatedQuotes").order("desc").collect();
-    return quotes;
+    const now = Date.now();
+
+    // Agregar información de expiración a cada cotización
+    return quotes.map(quote => {
+      let daysUntilExpiry = null;
+      let isExpired = false;
+
+      if (quote.expiresAt && quote.status === "pending") {
+        const msUntilExpiry = quote.expiresAt - now;
+        daysUntilExpiry = Math.ceil(msUntilExpiry / (24 * 60 * 60 * 1000));
+        isExpired = msUntilExpiry <= 0;
+      }
+
+      return {
+        ...quote,
+        daysUntilExpiry,
+        isExpired: isExpired && quote.status === "pending",
+      };
+    });
+  },
+});
+
+// Marcar cotizaciones expiradas (llamar periódicamente o al cargar)
+export const markExpiredQuotes = mutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const pendingQuotes = await ctx.db
+      .query("generatedQuotes")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .collect();
+
+    let expiredCount = 0;
+    for (const quote of pendingQuotes) {
+      if (quote.expiresAt && quote.expiresAt <= now) {
+        await ctx.db.patch(quote._id, {
+          status: "expired",
+          updatedAt: now,
+        });
+        expiredCount++;
+      }
+    }
+
+    return { expiredCount };
   },
 });
 

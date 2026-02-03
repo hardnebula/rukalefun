@@ -553,6 +553,7 @@ export default defineSchema({
     guestEmail: v.optional(v.string()),
     guestPhone: v.optional(v.string()),
     numberOfGuests: v.number(),
+    additionalGuests: v.optional(v.array(v.string())), // Nombres de acompañantes
     willAttend: v.boolean(),
     dietaryRestrictions: v.optional(v.string()),
     message: v.optional(v.string()),
@@ -610,6 +611,11 @@ export default defineSchema({
     // Minuta de reunión (resumen de temas tratados)
     meetingSummary: v.optional(v.string()),
 
+    // Sistema de notas colaborativas
+    notesAccessCode: v.optional(v.string()),      // Código para acceso público de novios
+    aiGeneratedSummary: v.optional(v.string()),   // Resumen generado por IA
+    aiSummaryGeneratedAt: v.optional(v.number()), // Timestamp del resumen IA
+
     // Sistema de recordatorios
     reminderSent: v.boolean(),
     reminderSentAt: v.optional(v.number()),
@@ -622,5 +628,32 @@ export default defineSchema({
     .index("by_date", ["meetingDate"])
     .index("by_status", ["status"])
     .index("by_client_email", ["clientEmail"])
-    .index("by_type", ["meetingType"]),
+    .index("by_type", ["meetingType"])
+    .index("by_access_code", ["notesAccessCode"]),
+
+  // Notas colaborativas de reuniones
+  meetingNotes: defineTable({
+    meetingId: v.id("meetings"),
+
+    // Autor
+    role: v.union(
+      v.literal("admin"),
+      v.literal("decoradora"),
+      v.literal("cocina"),
+      v.literal("dj"),
+      v.literal("fotografia"),
+      v.literal("novios"),
+      v.literal("otro")
+    ),
+    authorName: v.string(),
+
+    // Contenido
+    content: v.string(),
+    category: v.optional(v.string()), // "menu", "decoracion", "timeline", etc.
+
+    // Metadatos
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_meeting", ["meetingId"])
+    .index("by_role", ["meetingId", "role"]),
 });

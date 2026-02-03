@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   keywords: [
     "cotización eventos villarrica",
     "reservar eventos",
-    "solicitar presupuesto boda",
+    "solicitar presupuesto matrimonio",
     "cotizar evento corporativo",
     "reservas ruka lefún",
   ],

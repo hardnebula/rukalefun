@@ -2,6 +2,7 @@
 
 import AdminSidebar from "@/components/layout/AdminSidebar"
 import AdminGuard from "@/components/admin/AdminGuard"
+import AIChat from "@/components/admin/AIChat"
 import { usePathname } from "next/navigation"
 
 export default function AdminLayout({
@@ -10,7 +11,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  
+
   // No proteger la página de login
   if (pathname === "/admin/login") {
     return <>{children}</>
@@ -23,6 +24,7 @@ export default function AdminLayout({
         <main className="flex-1 overflow-y-auto bg-gray-50">
           {children}
         </main>
+        <AIChat />
       </div>
     </AdminGuard>
   )

@@ -82,14 +82,20 @@ export const getShoppingListDetails = query({
       })
     );
 
-    // Agrupar por categoría
-    const itemsByCategory: Record<string, typeof enrichedItems> = {};
+    // Agrupar por categoría como array (evita problemas con caracteres especiales en keys)
+    const categoryMap = new Map<string, typeof enrichedItems>();
     enrichedItems.forEach((item) => {
-      if (!itemsByCategory[item.category]) {
-        itemsByCategory[item.category] = [];
+      if (!categoryMap.has(item.category)) {
+        categoryMap.set(item.category, []);
       }
-      itemsByCategory[item.category].push(item);
+      categoryMap.get(item.category)!.push(item);
     });
+
+    // Convertir a array de objetos para evitar caracteres acentuados como field names
+    const itemsByCategory = Array.from(categoryMap.entries()).map(([category, categoryItems]) => ({
+      category,
+      items: categoryItems,
+    }));
 
     return {
       ...list,

@@ -1,6 +1,61 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// Obtener inventario público por código de acceso (para clientes)
+export const getPublicByAccessCode = query({
+  args: { accessCode: v.string() },
+  handler: async (ctx, args) => {
+    // Buscar la reserva por código de acceso
+    const booking = await ctx.db
+      .query("bookings")
+      .withIndex("by_guest_access_code", (q) => q.eq("guestAccessCode", args.accessCode))
+      .first();
+
+    if (!booking) {
+      return null;
+    }
+
+    // Obtener el inventario de tragos
+    const drinks = await ctx.db
+      .query("drinkInventory")
+      .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+      .collect();
+
+    // Calcular resumen
+    let totalIn = 0;
+    let totalConsumed = 0;
+    let totalReturned = 0;
+
+    drinks.forEach((item) => {
+      totalIn += item.quantityIn;
+      totalConsumed += item.quantityConsumed || 0;
+      totalReturned += item.quantityReturned || 0;
+    });
+
+    return {
+      booking: {
+        clientName: booking.clientName,
+        eventType: booking.eventType,
+        eventDate: booking.eventDate,
+      },
+      drinks: drinks.map((d) => ({
+        drinkType: d.drinkType,
+        brand: d.brand,
+        quantityIn: d.quantityIn,
+        quantityConsumed: d.quantityConsumed,
+        quantityReturned: d.quantityReturned,
+        status: d.status,
+      })),
+      summary: {
+        totalIn,
+        totalConsumed,
+        totalReturned,
+        pending: totalIn - totalConsumed - totalReturned,
+      },
+    };
+  },
+});
+
 // Obtener todos los tragos de una reserva
 export const getByBooking = query({
   args: { bookingId: v.id("bookings") },

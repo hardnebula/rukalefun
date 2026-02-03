@@ -96,7 +96,15 @@ export default function EspaciosPage() {
                         initial={{ scale: 1.1 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.7 }}
-                        src={currentSpace?.images?.[0] || "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200"}
+                        src={
+                          currentSpace?.name?.toLowerCase().includes("principal")
+                            ? "/Salon Principal/SalonPrincipal.jpeg"
+                            : currentSpace?.name?.toLowerCase().includes("ceremonia")
+                            ? "/Ceremonia/Ceremonia al aire libre.webp"
+                            : currentSpace?.name?.toLowerCase().includes("cocktail")
+                            ? "/cocktail/Cocktail al aire libre.webp"
+                            : currentSpace?.images?.[0] || "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1200"
+                        }
                         alt={currentSpace?.name}
                         className="w-full h-full object-cover object-center"
                       />

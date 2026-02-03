@@ -98,7 +98,7 @@ interface LocalBusinessSchemaProps {
 
 export function LocalBusinessSchema({
   name = "Ruka Lefún",
-  description = "Centro de eventos para bodas, eventos corporativos y celebraciones en Villarrica",
+  description = "Centro de eventos para matrimonios, eventos corporativos y celebraciones en Villarrica",
   address = {
     addressLocality: "Villarrica",
     addressRegion: "Región de La Araucanía",
@@ -216,6 +216,38 @@ export function WebsiteSchema({
   return (
     <Script
       id="website-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+interface FAQItem {
+  question: string
+  answer: string
+}
+
+interface FAQSchemaProps {
+  faqs: FAQItem[]
+}
+
+export function FAQSchema({ faqs }: FAQSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  }
+
+  return (
+    <Script
+      id="faq-schema"
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />

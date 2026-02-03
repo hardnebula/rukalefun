@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Save, Edit, FileText, Mail, Phone, Users, Clock, MapPin } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Plus, Trash2, Save, Edit, FileText, Mail, Phone, Users, Clock, MapPin, MessageSquare, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
+import MeetingNotes from "@/components/admin/MeetingNotes"
 
 export default function ReunionesPage() {
   const meetings = useQuery(api.meetings.getAllMeetings)
@@ -254,11 +256,13 @@ export default function ReunionesPage() {
                   </SelectTrigger>
                   <SelectContent className="z-[10000]">
                     <SelectItem value="none">Ninguna (reunión independiente)</SelectItem>
-                    {bookings?.map((booking) => (
-                      <SelectItem key={booking._id} value={booking._id}>
-                        {booking.eventType} - {booking.clientName} ({new Date(booking.eventDate).toLocaleDateString("es-CL")})
-                      </SelectItem>
-                    ))}
+                    {bookings
+                      ?.filter((booking) => booking.status !== "completed")
+                      .map((booking) => (
+                        <SelectItem key={booking._id} value={booking._id}>
+                          {booking.eventType} - {booking.clientName} ({new Date(booking.eventDate).toLocaleDateString("es-CL")})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
                 {selectedBooking && (
@@ -433,7 +437,7 @@ export default function ReunionesPage() {
 
       {/* Dialog para ver detalles de reunión */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl">Detalles de la Reunión</DialogTitle>
@@ -450,161 +454,210 @@ export default function ReunionesPage() {
           </DialogHeader>
 
           {selectedMeeting && (
-            <div className="space-y-6">
-              {/* Información básica */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="col-span-2">
-                  <h3 className="font-semibold text-lg text-purple-900">{selectedMeeting.title}</h3>
-                  <Badge className="mt-2">{selectedMeeting.status}</Badge>
-                </div>
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="info" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Información
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Notas Colaborativas
+                </TabsTrigger>
+                <TabsTrigger value="summary" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Resumen
+                </TabsTrigger>
+              </TabsList>
 
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Fecha y Hora</p>
-                    <p className="text-sm font-medium">
-                      {new Date(selectedMeeting.meetingDate).toLocaleDateString("es-CL")}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {selectedMeeting.startTime} - {selectedMeeting.endTime}
-                    </p>
+              {/* Tab: Información */}
+              <TabsContent value="info" className="space-y-6 mt-6">
+                {/* Información básica */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="col-span-2">
+                    <h3 className="font-semibold text-lg text-purple-900">{selectedMeeting.title}</h3>
+                    <Badge className="mt-2">{selectedMeeting.status}</Badge>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Cliente</p>
-                    <p className="text-sm font-medium">{selectedMeeting.clientName}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="text-sm">{selectedMeeting.clientEmail}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-purple-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">Teléfono</p>
-                    <p className="text-sm">{selectedMeeting.clientPhone}</p>
-                  </div>
-                </div>
-
-                {selectedMeeting.location && (
-                  <div className="col-span-2 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-purple-600" />
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-600" />
                     <div>
-                      <p className="text-xs text-gray-500">Ubicación</p>
-                      <p className="text-sm">{selectedMeeting.location}</p>
+                      <p className="text-xs text-gray-500">Fecha y Hora</p>
+                      <p className="text-sm font-medium">
+                        {new Date(selectedMeeting.meetingDate).toLocaleDateString("es-CL")}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {selectedMeeting.startTime} - {selectedMeeting.endTime}
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Vinculación con reserva */}
-              {selectedMeeting.booking && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-semibold text-blue-900 mb-2">🔗 Vinculada con Reserva</h4>
-                  <div className="space-y-1">
-                    <p className="text-sm text-blue-800">
-                      <strong>Evento:</strong> {selectedMeeting.booking.eventType}
-                    </p>
-                    <p className="text-sm text-blue-700">
-                      <strong>Fecha del Evento:</strong> {new Date(selectedMeeting.booking.eventDate).toLocaleDateString("es-CL")}
-                    </p>
-                    <p className="text-sm text-blue-700">
-                      <strong>Invitados:</strong> {selectedMeeting.booking.numberOfGuests}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Agenda */}
-              {selectedMeeting.agenda && (
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                  <h4 className="font-semibold text-gray-900 mb-2">Agenda</h4>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMeeting.agenda}</p>
-                </div>
-              )}
-
-              {/* Notas */}
-              {selectedMeeting.notes && (
-                <div className="p-4 bg-gray-50 rounded-lg border">
-                  <h4 className="font-semibold text-gray-900 mb-2">Notas Adicionales</h4>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMeeting.notes}</p>
-                </div>
-              )}
-
-              {/* Minuta de la reunión */}
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold text-purple-900">Minuta de la Reunión</h4>
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Cliente</p>
+                      <p className="text-sm font-medium">{selectedMeeting.clientName}</p>
+                    </div>
                   </div>
-                  {!editingSummary ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingSummary(true)}
-                      className="border-purple-300 text-purple-700 hover:bg-purple-100"
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Editar
-                    </Button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingSummary(false)
-                          setSummaryText(selectedMeeting.meetingSummary || "")
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveSummary}
-                        disabled={saving}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        {saving ? "Guardando..." : "Guardar"}
-                      </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Email</p>
+                      <p className="text-sm">{selectedMeeting.clientEmail}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-purple-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Teléfono</p>
+                      <p className="text-sm">{selectedMeeting.clientPhone}</p>
+                    </div>
+                  </div>
+
+                  {selectedMeeting.location && (
+                    <div className="col-span-2 flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-purple-600" />
+                      <div>
+                        <p className="text-xs text-gray-500">Ubicación</p>
+                        <p className="text-sm">{selectedMeeting.location}</p>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {editingSummary ? (
-                  <Textarea
-                    value={summaryText}
-                    onChange={(e) => setSummaryText(e.target.value)}
-                    placeholder="Escribe aquí los temas tratados en la reunión, acuerdos alcanzados, próximos pasos, etc."
-                    rows={10}
-                    className="w-full"
-                  />
-                ) : (
-                  <div className="min-h-[100px] p-3 bg-white rounded border">
-                    {selectedMeeting.meetingSummary ? (
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {selectedMeeting.meetingSummary}
+                {/* Vinculación con reserva */}
+                {selectedMeeting.booking && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold text-blue-900 mb-2">Vinculada con Reserva</h4>
+                    <div className="space-y-1">
+                      <p className="text-sm text-blue-800">
+                        <strong>Evento:</strong> {selectedMeeting.booking.eventType}
                       </p>
-                    ) : (
-                      <p className="text-sm text-gray-400 italic">
-                        No hay minuta registrada. Haz clic en &quot;Editar&quot; para agregar una.
+                      <p className="text-sm text-blue-700">
+                        <strong>Fecha del Evento:</strong> {new Date(selectedMeeting.booking.eventDate).toLocaleDateString("es-CL")}
                       </p>
-                    )}
+                      <p className="text-sm text-blue-700">
+                        <strong>Invitados:</strong> {selectedMeeting.booking.numberOfGuests}
+                      </p>
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
+
+                {/* Agenda */}
+                {selectedMeeting.agenda && (
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <h4 className="font-semibold text-gray-900 mb-2">Agenda</h4>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMeeting.agenda}</p>
+                  </div>
+                )}
+
+                {/* Notas */}
+                {selectedMeeting.notes && (
+                  <div className="p-4 bg-gray-50 rounded-lg border">
+                    <h4 className="font-semibold text-gray-900 mb-2">Notas Adicionales</h4>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedMeeting.notes}</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Tab: Notas Colaborativas */}
+              <TabsContent value="notes" className="mt-6">
+                <MeetingNotes
+                  meetingId={selectedMeeting._id}
+                  accessCode={selectedMeeting.notesAccessCode}
+                />
+              </TabsContent>
+
+              {/* Tab: Resumen */}
+              <TabsContent value="summary" className="space-y-6 mt-6">
+                {/* Resumen IA */}
+                {selectedMeeting.aiGeneratedSummary && (
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-5 h-5 text-purple-600" />
+                      <h4 className="font-semibold text-purple-900">Resumen Generado por IA</h4>
+                      {selectedMeeting.aiSummaryGeneratedAt && (
+                        <span className="text-xs text-gray-500">
+                          ({new Date(selectedMeeting.aiSummaryGeneratedAt).toLocaleString("es-CL")})
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3 bg-white rounded border">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {selectedMeeting.aiGeneratedSummary}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Minuta de la reunión */}
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-600" />
+                      <h4 className="font-semibold text-purple-900">Minuta Manual</h4>
+                    </div>
+                    {!editingSummary ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingSummary(true)}
+                        className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingSummary(false)
+                            setSummaryText(selectedMeeting.meetingSummary || "")
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveSummary}
+                          disabled={saving}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {saving ? "Guardando..." : "Guardar"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {editingSummary ? (
+                    <Textarea
+                      value={summaryText}
+                      onChange={(e) => setSummaryText(e.target.value)}
+                      placeholder="Escribe aquí los temas tratados en la reunión, acuerdos alcanzados, próximos pasos, etc."
+                      rows={10}
+                      className="w-full"
+                    />
+                  ) : (
+                    <div className="min-h-[100px] p-3 bg-white rounded border">
+                      {selectedMeeting.meetingSummary ? (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {selectedMeeting.meetingSummary}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-400 italic">
+                          No hay minuta registrada. Haz clic en &quot;Editar&quot; para agregar una.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>

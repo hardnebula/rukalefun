@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Plus, Eye, EyeOff, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -31,7 +31,7 @@ export default function GaleriaAdminPage() {
 
   const categories = [
     { id: "all", label: "Todas" },
-    { id: "boda", label: "Bodas" },
+    { id: "boda", label: "Matrimonios" },
     { id: "corporativo", label: "Corporativos" },
     { id: "cumpleanos", label: "Cumpleaños" },
     { id: "espacio", label: "Instalaciones" },
@@ -210,7 +210,7 @@ export default function GaleriaAdminPage() {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                placeholder="Ej: Boda de María y Juan"
+                placeholder="Ej: Matrimonio de Maria y Juan"
               />
             </div>
 
@@ -230,17 +230,20 @@ export default function GaleriaAdminPage() {
             </div>
 
             <div>
-              <Label htmlFor="category">Categoría *</Label>
+              <Label htmlFor="category">Categoria *</Label>
               <Select
-                id="category"
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                required
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
               >
-                <option value="boda">Bodas</option>
-                <option value="corporativo">Corporativos</option>
-                <option value="cumpleanos">Cumpleaños</option>
-                <option value="espacio">Instalaciones</option>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="boda">Matrimonios</SelectItem>
+                  <SelectItem value="corporativo">Corporativos</SelectItem>
+                  <SelectItem value="cumpleanos">Cumpleanos</SelectItem>
+                  <SelectItem value="espacio">Instalaciones</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 

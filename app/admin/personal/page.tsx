@@ -14,20 +14,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { 
-  Users, 
-  UserPlus, 
-  Calendar, 
-  DollarSign, 
-  CheckCircle, 
+import {
+  Users,
+  UserPlus,
+  Calendar,
+  DollarSign,
+  CheckCircle,
   XCircle,
   Clock,
   Edit,
-  Trash2
+  Trash2,
+  ChefHat,
+  UtensilsCrossed,
+  Camera,
+  Music,
+  Mic2,
+  Palette,
+  Phone
 } from "lucide-react"
 import { toast } from "sonner"
 
 type TabType = "personal" | "asignaciones" | "pagos"
+
+// Categorías de personal con sus configuraciones
+const STAFF_CATEGORIES = [
+  { id: "Garzón", label: "Garzones", icon: UtensilsCrossed, color: "bg-amber-500", textColor: "text-amber-600" },
+  { id: "Cocina", label: "Cocina", icon: ChefHat, color: "bg-orange-500", textColor: "text-orange-600" },
+  { id: "Decoración", label: "Decoración", icon: Palette, color: "bg-pink-500", textColor: "text-pink-600" },
+  { id: "Fotografía", label: "Fotografía", icon: Camera, color: "bg-blue-500", textColor: "text-blue-600" },
+  { id: "DJ", label: "DJ", icon: Music, color: "bg-purple-500", textColor: "text-purple-600" },
+  { id: "Animación", label: "Animación", icon: Mic2, color: "bg-green-500", textColor: "text-green-600" },
+] as const
+
+type StaffCategory = typeof STAFF_CATEGORIES[number]["id"]
+
+function getCategoryConfig(role: string) {
+  return STAFF_CATEGORIES.find(c => c.id === role) || STAFF_CATEGORIES[0]
+}
 
 export default function RecursosPage() {
   const [activeTab, setActiveTab] = useState<TabType>("personal")
@@ -95,23 +118,53 @@ function PersonalTab() {
   const staff = useQuery(api.staff.getAllStaff)
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
   const [editingStaff, setEditingStaff] = useState<any>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   if (staff === undefined) {
     return <div className="text-center py-8">Cargando personal...</div>
   }
 
+  // Filtrar por búsqueda
+  const filteredStaff = searchQuery
+    ? staff.filter(person =>
+        person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        person.phone.includes(searchQuery)
+      )
+    : staff
+
+  // Agrupar por categoría y ordenar alfabéticamente dentro de cada grupo
+  const groupedStaff = STAFF_CATEGORIES.map(category => ({
+    ...category,
+    members: filteredStaff
+      .filter(person => person.role === category.id)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+  })).filter(group => group.members.length > 0)
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <p className="text-sm text-gray-600">
-            Total: {staff.length} personas
-          </p>
+      {/* Header con búsqueda y botón agregar */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-gray-500">
+            <Users className="w-5 h-5" />
+            <span className="font-medium">{staff.length} contactos</span>
+          </div>
         </div>
-        <Button onClick={() => setIsAddStaffOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" />
-          Agregar Personal
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Input
+              placeholder="Buscar por nombre o teléfono..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+            <Users className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+          <Button onClick={() => setIsAddStaffOpen(true)}>
+            <UserPlus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Agregar</span>
+          </Button>
+        </div>
       </div>
 
       {/* Modal de Agregar/Editar Personal */}
@@ -119,7 +172,7 @@ function PersonalTab() {
         setIsAddStaffOpen(open)
         if (!open) setEditingStaff(null)
       }}>
-        <DialogContent 
+        <DialogContent
           open={isAddStaffOpen || !!editingStaff}
           onClose={() => {
             setIsAddStaffOpen(false)
@@ -131,7 +184,7 @@ function PersonalTab() {
               {editingStaff ? "Editar Personal" : "Agregar Personal"}
             </DialogTitle>
           </DialogHeader>
-          <StaffForm 
+          <StaffForm
             staff={editingStaff}
             onClose={() => {
               setIsAddStaffOpen(false)
@@ -141,61 +194,124 @@ function PersonalTab() {
         </DialogContent>
       </Dialog>
 
-      <div className="hidden">
-      </div>
+      {/* Grid de cards */}
+      {groupedStaff.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">
+            {searchQuery ? "No se encontraron resultados" : "No hay personal registrado"}
+          </p>
+          {!searchQuery && (
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => setIsAddStaffOpen(true)}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Agregar personal
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {groupedStaff.map((group) => {
+            const Icon = group.icon
+            return (
+              <div key={group.id}>
+                {/* Header del grupo */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`w-8 h-8 rounded-full ${group.color} flex items-center justify-center`}>
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-800 text-lg">{group.label}</h3>
+                  <span className="text-sm text-gray-400">({group.members.length})</span>
+                </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {staff.map((person) => (
-          <Card key={person._id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold truncate">{person.name}</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Badge variant="outline" className="text-xs">{person.role}</Badge>
-                    <Badge variant={person.isActive ? "default" : "secondary"} className="text-xs">
-                      {person.isActive ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex gap-1 ml-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setEditingStaff(person)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <DeleteStaffButton staffId={person._id} />
+                {/* Grid de cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {group.members.map((person) => (
+                    <StaffCard
+                      key={person._id}
+                      person={person}
+                      onEdit={() => setEditingStaff(person)}
+                    />
+                  ))}
                 </div>
               </div>
-              
-              <div className="space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Teléfono:</span>
-                  <span className="font-medium">{person.phone}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Tarifa/evento:</span>
-                  <span className="font-semibold text-green-600">${person.ratePerEvent.toLocaleString()}</span>
-                </div>
-                {person.ratePerHour && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Tarifa/hora:</span>
-                    <span className="font-medium">${person.ratePerHour.toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
-              
-              {person.notes && (
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{person.notes}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
+  )
+}
+
+// Componente de card para personal
+function StaffCard({ person, onEdit }: { person: any; onEdit: () => void }) {
+  const config = getCategoryConfig(person.role)
+  const Icon = config.icon
+  const initials = person.name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+
+  return (
+    <Card
+      className={`cursor-pointer transition-all hover:shadow-md hover:-translate-y-1 ${!person.isActive ? "opacity-60" : ""}`}
+      onClick={onEdit}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Avatar grande */}
+          <div className={`w-14 h-14 rounded-xl ${config.color} flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm`}>
+            {initials}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-gray-900 truncate">{person.name}</h3>
+              {!person.isActive && (
+                <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">
+                  Inactivo
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-2">
+              <Phone className="w-3.5 h-3.5" />
+              <span className="truncate">{person.phone}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Icon className={`w-4 h-4 ${config.textColor}`} />
+                <span className={`text-xs font-medium ${config.textColor}`}>{config.label}</span>
+              </div>
+              <span className="font-bold text-green-600 text-sm">
+                ${person.ratePerEvent.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-3 text-gray-500 hover:text-blue-600"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Editar
+          </Button>
+          <DeleteStaffButton staffId={person._id} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -203,6 +319,7 @@ function StaffForm({ staff, onClose }: { staff?: any, onClose: () => void }) {
   const createStaff = useMutation(api.staff.createStaff)
   const updateStaff = useMutation(api.staff.updateStaff)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedRole, setSelectedRole] = useState(staff?.role || "")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -215,8 +332,8 @@ function StaffForm({ staff, onClose }: { staff?: any, onClose: () => void }) {
       phone: formData.get("phone") as string,
       email: formData.get("email") as string || undefined,
       ratePerEvent: Number(formData.get("ratePerEvent")),
-      ratePerHour: formData.get("ratePerHour") 
-        ? Number(formData.get("ratePerHour")) 
+      ratePerHour: formData.get("ratePerHour")
+        ? Number(formData.get("ratePerHour"))
         : undefined,
       notes: formData.get("notes") as string || undefined,
       isActive: formData.get("isActive") === "true",
@@ -242,93 +359,134 @@ function StaffForm({ staff, onClose }: { staff?: any, onClose: () => void }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">Nombre completo *</Label>
-        <Input 
-          id="name" 
-          name="name" 
+        <Input
+          id="name"
+          name="name"
           defaultValue={staff?.name}
-          required 
-        />
-      </div>
-      <div>
-        <Label htmlFor="role">Rol *</Label>
-        <select 
-          id="role" 
-          name="role" 
-          defaultValue={staff?.role}
-          className="w-full p-2 border rounded"
+          placeholder="Ej: Juan Pérez González"
           required
-        >
-          <option value="">Seleccionar rol</option>
-          <option value="Garzón">Garzón</option>
-          <option value="Cocina">Cocina</option>
-          <option value="Diseño">Diseño</option>
-          <option value="DJ">DJ</option>
-          <option value="Animación">Animación</option>
-          <option value="Fotografía">Fotografía</option>
-        </select>
-      </div>
-      <div>
-        <Label htmlFor="phone">Teléfono *</Label>
-        <Input 
-          id="phone" 
-          name="phone" 
-          type="tel"
-          defaultValue={staff?.phone}
-          required 
         />
       </div>
+
+      {/* Selector de rol visual con iconos */}
       <div>
-        <Label htmlFor="email">Email</Label>
-        <Input 
-          id="email" 
-          name="email" 
-          type="email"
-          defaultValue={staff?.email}
-        />
+        <Label className="mb-2 block">Categoría *</Label>
+        <input type="hidden" name="role" value={selectedRole} />
+        <div className="grid grid-cols-3 gap-2">
+          {STAFF_CATEGORIES.map((category) => {
+            const Icon = category.icon
+            const isSelected = selectedRole === category.id
+            return (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedRole(category.id)}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all ${
+                  isSelected
+                    ? `border-blue-500 bg-blue-50 ring-2 ring-offset-1 ring-blue-500`
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full ${category.color} flex items-center justify-center`}>
+                  <Icon className="w-4 h-4 text-white" />
+                </div>
+                <span className={`text-xs font-medium ${isSelected ? "text-blue-700" : "text-gray-600"}`}>
+                  {category.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        {!selectedRole && (
+          <p className="text-xs text-red-500 mt-1">Selecciona una categoría</p>
+        )}
       </div>
-      <div>
-        <Label htmlFor="ratePerEvent">Tarifa por evento *</Label>
-        <Input 
-          id="ratePerEvent" 
-          name="ratePerEvent" 
-          type="number"
-          defaultValue={staff?.ratePerEvent}
-          required 
-        />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="phone">Teléfono *</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            defaultValue={staff?.phone}
+            placeholder="+56 9 1234 5678"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            defaultValue={staff?.email}
+            placeholder="correo@ejemplo.com"
+          />
+        </div>
       </div>
-      <div>
-        <Label htmlFor="ratePerHour">Tarifa por hora (opcional)</Label>
-        <Input 
-          id="ratePerHour" 
-          name="ratePerHour" 
-          type="number"
-          defaultValue={staff?.ratePerHour}
-        />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="ratePerEvent">Tarifa por evento *</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+            <Input
+              id="ratePerEvent"
+              name="ratePerEvent"
+              type="number"
+              defaultValue={staff?.ratePerEvent}
+              className="pl-7"
+              placeholder="50000"
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="ratePerHour">Tarifa por hora</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-2.5 text-gray-500">$</span>
+            <Input
+              id="ratePerHour"
+              name="ratePerHour"
+              type="number"
+              defaultValue={staff?.ratePerHour}
+              className="pl-7"
+              placeholder="5000"
+            />
+          </div>
+        </div>
       </div>
+
       <div>
-        <Label htmlFor="notes">Notas</Label>
-        <Input 
-          id="notes" 
+        <Label htmlFor="notes">Notas adicionales</Label>
+        <Input
+          id="notes"
           name="notes"
           defaultValue={staff?.notes}
+          placeholder="Especialidad, disponibilidad, etc."
         />
       </div>
-      <div className="flex items-center gap-2">
-        <input 
-          type="checkbox" 
-          id="isActive" 
+
+      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+        <input
+          type="checkbox"
+          id="isActive"
           name="isActive"
           value="true"
           defaultChecked={staff?.isActive ?? true}
-          className="w-4 h-4"
+          className="w-4 h-4 rounded"
         />
-        <Label htmlFor="isActive">Personal activo</Label>
+        <Label htmlFor="isActive" className="text-sm cursor-pointer">
+          Personal activo y disponible para asignaciones
+        </Label>
       </div>
-      <div className="flex justify-end gap-2">
+
+      <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !selectedRole}>
           {isSubmitting ? "Guardando..." : (staff ? "Actualizar" : "Agregar")}
         </Button>
       </div>
@@ -408,13 +566,17 @@ function AsignacionesTab() {
 
       {/* Modal de Asignar Personal */}
       <Dialog open={isAddAssignmentOpen} onOpenChange={setIsAddAssignmentOpen}>
-        <DialogContent 
+        <DialogContent
           open={isAddAssignmentOpen}
           onClose={() => setIsAddAssignmentOpen(false)}
-          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          className="max-w-4xl max-h-[90vh] overflow-hidden"
         >
           <DialogHeader>
-            <DialogTitle className="text-xl">🎯 Asignar Personal al Evento</DialogTitle>
+            <DialogTitle className="text-xl flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-blue-600" />
+              Asignar Personal
+            </DialogTitle>
+            <p className="text-sm text-gray-500">Selecciona un evento y haz click en el personal para asignarlo</p>
           </DialogHeader>
           <AssignmentForm onClose={() => setIsAddAssignmentOpen(false)} />
         </DialogContent>
@@ -455,6 +617,15 @@ function AssignmentCard({ assignment }: { assignment: any }) {
   const deleteAssignment = useMutation(api.staff.deleteAssignment)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const config = getCategoryConfig(assignment.role)
+  const Icon = config.icon
+  const initials = assignment.staff?.name
+    ?.split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "?"
+
   const handleConfirmAttendance = async (confirmed: boolean) => {
     try {
       await confirmAttendance({
@@ -481,61 +652,54 @@ function AssignmentCard({ assignment }: { assignment: any }) {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <h4 className="font-semibold">{assignment.staff?.name}</h4>
-          <Badge variant="outline">{assignment.role}</Badge>
-          <Badge variant={assignment.confirmedAttendance ? "default" : "secondary"}>
-            {assignment.confirmedAttendance ? (
-              <>
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Confirmado
-              </>
-            ) : (
-              <>
-                <Clock className="w-3 h-3 mr-1" />
-                Pendiente
-              </>
-            )}
-          </Badge>
+    <div className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-sm transition-shadow">
+      <div className="flex items-center gap-3 flex-1">
+        {/* Avatar */}
+        <div className={`w-9 h-9 rounded-full ${config.color} flex items-center justify-center text-white font-medium text-xs flex-shrink-0`}>
+          {initials}
         </div>
-        <div className="text-sm text-gray-600">
-          <span>{assignment.scheduledStartTime} - {assignment.scheduledEndTime}</span>
-          <span className="mx-2">•</span>
-          <span className="font-medium">${assignment.amountToPay.toLocaleString()}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-gray-900 truncate">{assignment.staff?.name}</h4>
+            <Icon className={`w-3.5 h-3.5 ${config.textColor}`} />
+            <Badge variant={assignment.confirmedAttendance ? "default" : "secondary"} className="text-xs">
+              {assignment.confirmedAttendance ? "Confirmado" : "Pendiente"}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+            <span>{assignment.scheduledStartTime} - {assignment.scheduledEndTime}</span>
+            <span>•</span>
+            <span className="font-semibold text-green-600">${assignment.amountToPay.toLocaleString()}</span>
+          </div>
         </div>
-        {assignment.notes && (
-          <p className="text-sm text-gray-500 mt-1">{assignment.notes}</p>
-        )}
       </div>
-      <div className="flex gap-2">
-        {!assignment.confirmedAttendance && (
+      <div className="flex gap-1 ml-2">
+        {!assignment.confirmedAttendance ? (
           <Button
             size="sm"
             onClick={() => handleConfirmAttendance(true)}
+            className="bg-green-600 hover:bg-green-700 h-8"
           >
-            <CheckCircle className="w-4 h-4 mr-1" />
-            Confirmar
+            <CheckCircle className="w-4 h-4" />
           </Button>
-        )}
-        {assignment.confirmedAttendance && (
+        ) : (
           <Button
             size="sm"
             variant="outline"
             onClick={() => handleConfirmAttendance(false)}
+            className="h-8"
           >
-            <XCircle className="w-4 h-4 mr-1" />
-            Cancelar
+            <XCircle className="w-4 h-4" />
           </Button>
         )}
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
           onClick={handleDelete}
           disabled={isDeleting}
+          className="text-gray-400 hover:text-red-600 h-8"
         >
-          <Trash2 className="w-4 h-4 text-red-600" />
+          <Trash2 className="w-4 h-4" />
         </Button>
       </div>
     </div>
@@ -548,7 +712,6 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
   const createAssignment = useMutation(api.staff.createAssignment)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<any>(null)
-  const [selectedStaff, setSelectedStaff] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
 
@@ -558,37 +721,21 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
     selectedBooking ? { bookingId: selectedBooking._id } : "skip"
   )
 
-  const [formData, setFormData] = useState({
-    role: "",
-    scheduledStartTime: "",
-    scheduledEndTime: "",
-    amountToPay: 0,
-    notes: "",
-  })
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!selectedBooking || !selectedStaff) {
-      toast.error("Selecciona un evento y un personal")
-      return
-    }
+  // Asignar personal directamente con un click
+  const handleQuickAssign = async (person: any) => {
+    if (!selectedBooking) return
 
     setIsSubmitting(true)
-
-    const data = {
-      bookingId: selectedBooking._id,
-      staffId: selectedStaff._id,
-      role: formData.role,
-      scheduledStartTime: formData.scheduledStartTime,
-      scheduledEndTime: formData.scheduledEndTime,
-      amountToPay: formData.amountToPay,
-      notes: formData.notes || undefined,
-    }
-
     try {
-      await createAssignment(data)
-      toast.success("Personal asignado exitosamente")
-      onClose()
+      await createAssignment({
+        bookingId: selectedBooking._id,
+        staffId: person._id,
+        role: person.role,
+        scheduledStartTime: selectedBooking.startTime,
+        scheduledEndTime: selectedBooking.endTime,
+        amountToPay: person.ratePerEvent,
+      })
+      toast.success(`${person.name} asignado al evento`)
     } catch (error) {
       toast.error("Error al asignar personal")
     } finally {
@@ -596,20 +743,8 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const handleStaffSelect = (person: any) => {
-    setSelectedStaff(person)
-    // Auto-completar datos
-    setFormData(prev => ({
-      ...prev,
-      role: person.role,
-      amountToPay: person.ratePerEvent,
-      scheduledStartTime: selectedBooking?.startTime || "",
-      scheduledEndTime: selectedBooking?.endTime || "",
-    }))
-  }
-
   if (!bookings || !staff) {
-    return <div className="text-center py-4">Cargando...</div>
+    return <div className="text-center py-8">Cargando...</div>
   }
 
   // Filtrar solo eventos futuros o de hoy
@@ -618,7 +753,7 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return eventDate >= today
-  })
+  }).sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
 
   // Filtrar personal ya asignado al evento seleccionado
   const assignedStaffIds = new Set(
@@ -631,263 +766,188 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
     return notAssigned && matchesSearch && matchesRole
   })
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Selección de Evento */}
-      <div>
-        <Label className="text-lg font-semibold mb-3 block flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-blue-600" />
-          Paso 1: Selecciona el Evento
-        </Label>
+  // Agrupar personal disponible por categoría
+  const staffByCategory = STAFF_CATEGORIES.map(category => ({
+    ...category,
+    members: availableStaff.filter((person: any) => person.role === category.id)
+  })).filter(group => group.members.length > 0)
 
-        <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto pr-2">
+  return (
+    <div className="flex gap-6 min-h-[500px]">
+      {/* Panel Izquierdo: Eventos */}
+      <div className="w-1/3 border-r pr-6">
+        <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-blue-600" />
+          Selecciona Evento
+        </h3>
+
+        <div className="space-y-2 max-h-[450px] overflow-y-auto pr-2">
           {upcomingBookings.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No hay eventos próximos</p>
+            <p className="text-center text-gray-500 py-8 text-sm">No hay eventos próximos</p>
           ) : (
-            upcomingBookings.map((booking: any) => (
-              <Card
-                key={booking._id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedBooking?._id === booking._id
-                    ? "ring-2 ring-blue-500 bg-blue-50"
-                    : "hover:border-blue-300"
-                }`}
-                onClick={() => {
-                  setSelectedBooking(booking)
-                  setSelectedStaff(null)
-                  setFormData(prev => ({
-                    ...prev,
-                    scheduledStartTime: booking.startTime,
-                    scheduledEndTime: booking.endTime,
-                  }))
-                }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-base truncate">{booking.eventType}</h3>
-                        <Badge variant="outline" className="text-xs">{booking.status}</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 truncate">{booking.clientName}</p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span>📅 {new Date(booking.eventDate).toLocaleDateString("es-CL")}</span>
-                        <span>🕐 {booking.startTime} - {booking.endTime}</span>
-                        <span>👥 {booking.numberOfGuests} personas</span>
-                      </div>
+            upcomingBookings.map((booking: any) => {
+              const isSelected = selectedBooking?._id === booking._id
+              const assignmentCount = isSelected ? (existingAssignments?.length || 0) : 0
+              return (
+                <div
+                  key={booking._id}
+                  onClick={() => setSelectedBooking(booking)}
+                  className={`p-3 rounded-lg cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-blue-50 border-2 border-blue-500"
+                      : "bg-gray-50 border-2 border-transparent hover:border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{booking.eventType}</p>
+                      <p className="text-xs text-gray-500 truncate">{booking.clientName}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(booking.eventDate).toLocaleDateString("es-CL", { weekday: 'short', day: 'numeric', month: 'short' })}
+                      </p>
                     </div>
-                    {selectedBooking?._id === booking._id && (
-                      <CheckCircle className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    {isSelected && (
+                      <div className="flex-shrink-0">
+                        <CheckCircle className="w-5 h-5 text-blue-600" />
+                      </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            ))
+                  {isSelected && assignmentCount > 0 && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      {assignmentCount} asignado{assignmentCount !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              )
+            })
           )}
         </div>
       </div>
 
-      {/* Selección de Personal */}
-      <div className={!selectedBooking ? "opacity-50 pointer-events-none" : ""}>
-        <Label className="text-lg font-semibold mb-3 block flex items-center gap-2">
-          <Users className="w-5 h-5 text-green-600" />
-          Paso 2: Selecciona el Personal
-        </Label>
-
+      {/* Panel Derecho: Personal */}
+      <div className="flex-1">
         {!selectedBooking ? (
-          <p className="text-center text-gray-400 py-8 border-2 border-dashed rounded-lg">
-            Primero selecciona un evento
-          </p>
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center text-gray-400">
+              <Users className="w-16 h-16 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">Selecciona un evento</p>
+              <p className="text-sm">para ver el personal disponible</p>
+            </div>
+          </div>
         ) : (
           <>
-            {/* Filtros y búsqueda */}
-            <div className="flex gap-2 mb-3">
+            {/* Info del evento seleccionado */}
+            <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-900">{selectedBooking.eventType}</h3>
+                  <p className="text-sm text-blue-700">{selectedBooking.clientName}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-blue-600">
+                    <span>📅 {new Date(selectedBooking.eventDate).toLocaleDateString("es-CL")}</span>
+                    <span>🕐 {selectedBooking.startTime} - {selectedBooking.endTime}</span>
+                    <span>👥 {selectedBooking.numberOfGuests} personas</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal ya asignado */}
+              {existingAssignments && existingAssignments.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-xs font-medium text-blue-800 mb-2">Personal asignado:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {existingAssignments.map((assignment: any) => {
+                      const config = getCategoryConfig(assignment.role)
+                      return (
+                        <span
+                          key={assignment._id}
+                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-white ${config.color}`}
+                        >
+                          {assignment.staff?.name?.split(' ')[0]}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Filtros */}
+            <div className="flex gap-2 mb-4">
               <Input
-                placeholder="🔍 Buscar por nombre..."
+                placeholder="Buscar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1"
+                className="flex-1 h-9"
               />
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm h-9"
               >
-                <option value="all">Todos los roles</option>
-                <option value="Garzón">Garzón</option>
-                <option value="Cocina">Cocina</option>
-                <option value="Diseño">Diseño</option>
-                <option value="DJ">DJ</option>
-                <option value="Animación">Animación</option>
-                <option value="Fotografía">Fotografía</option>
+                <option value="all">Todas</option>
+                {STAFF_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.label}</option>
+                ))}
               </select>
             </div>
 
-            {existingAssignments && existingAssignments.length > 0 && (
-              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-3">
-                ℹ️ {existingAssignments.length} persona{existingAssignments.length !== 1 ? 's' : ''} ya asignada{existingAssignments.length !== 1 ? 's' : ''}
-                {availableStaff.length > 0 && ` • ${availableStaff.length} disponible${availableStaff.length !== 1 ? 's' : ''}`}
-              </p>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-2">
-              {availableStaff.length === 0 ? (
-                <div className="col-span-2 text-center text-gray-500 py-8">
-                  {searchQuery || roleFilter !== "all"
-                    ? "No se encontró personal con los filtros aplicados"
-                    : "Todo el personal ya está asignado a este evento"}
+            {/* Lista de personal disponible por categoría */}
+            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-2">
+              {staffByCategory.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">
+                    {searchQuery || roleFilter !== "all"
+                      ? "No se encontró personal"
+                      : "Todo el personal ya está asignado"}
+                  </p>
                 </div>
               ) : (
-                availableStaff.map((person: any) => (
-                  <Card
-                    key={person._id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedStaff?._id === person._id
-                        ? "ring-2 ring-green-500 bg-green-50"
-                        : "hover:border-green-300"
-                    }`}
-                    onClick={() => handleStaffSelect(person)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="flex items-start gap-2">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                          {person.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                staffByCategory.map((group) => {
+                  const Icon = group.icon
+                  return (
+                    <div key={group.id}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-6 h-6 rounded-full ${group.color} flex items-center justify-center`}>
+                          <Icon className="w-3 h-3 text-white" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate">{person.name}</h4>
-                          <Badge variant="outline" className="text-xs mt-1">{person.role}</Badge>
-                          <div className="mt-2 space-y-0.5">
-                            <p className="text-xs text-gray-600">📞 {person.phone}</p>
-                            <p className="text-xs font-semibold text-green-600">
-                              ${person.ratePerEvent.toLocaleString()}/evento
-                            </p>
-                          </div>
-                        </div>
-                        {selectedStaff?._id === person._id && (
-                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                        )}
+                        <span className="text-sm font-medium text-gray-700">{group.label}</span>
+                        <span className="text-xs text-gray-400">({group.members.length})</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      <div className="grid grid-cols-2 gap-2">
+                        {group.members.map((person: any) => {
+                          const initials = person.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                          return (
+                            <button
+                              key={person._id}
+                              type="button"
+                              onClick={() => handleQuickAssign(person)}
+                              disabled={isSubmitting}
+                              className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 bg-white hover:border-green-400 hover:bg-green-50 transition-all text-left disabled:opacity-50"
+                            >
+                              <div className={`w-8 h-8 rounded-full ${group.color} flex items-center justify-center text-white text-xs font-medium flex-shrink-0`}>
+                                {initials}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{person.name}</p>
+                                <p className="text-xs text-green-600 font-semibold">${person.ratePerEvent.toLocaleString()}</p>
+                              </div>
+                              <div className="flex-shrink-0 text-green-600">
+                                <UserPlus className="w-4 h-4" />
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })
               )}
             </div>
           </>
         )}
       </div>
-
-      {/* Detalles de la Asignación */}
-      <div className={`border-t pt-4 ${!selectedStaff ? "opacity-50 pointer-events-none" : ""}`}>
-        <Label className="text-lg font-semibold mb-3 block flex items-center gap-2">
-          <Edit className="w-5 h-5 text-purple-600" />
-          Paso 3: Detalles de la Asignación
-        </Label>
-
-        {!selectedStaff ? (
-          <p className="text-center text-gray-400 py-8 border-2 border-dashed rounded-lg">
-            Primero selecciona un evento y un personal
-          </p>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="role" className="text-sm font-medium">Rol en este evento *</Label>
-              <select
-                id="role"
-                value={formData.role}
-                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-lg mt-1"
-                required
-              >
-                <option value="">Seleccionar rol...</option>
-                <option value="Garzón">Garzón</option>
-                <option value="Cocina">Cocina</option>
-                <option value="Diseño">Diseño</option>
-                <option value="DJ">DJ</option>
-                <option value="Animación">Animación</option>
-                <option value="Fotografía">Fotografía</option>
-              </select>
-              <p className="text-xs text-gray-500 mt-1">Se auto-completa, pero puedes cambiarlo si es necesario</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="scheduledStartTime" className="text-sm font-medium">Hora inicio *</Label>
-                <Input
-                  id="scheduledStartTime"
-                  type="time"
-                  value={formData.scheduledStartTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledStartTime: e.target.value }))}
-                  className="mt-1"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="scheduledEndTime" className="text-sm font-medium">Hora fin *</Label>
-                <Input
-                  id="scheduledEndTime"
-                  type="time"
-                  value={formData.scheduledEndTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledEndTime: e.target.value }))}
-                  className="mt-1"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="amountToPay" className="text-sm font-medium">Monto a pagar *</Label>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-2.5 text-gray-500">$</span>
-                <Input
-                  id="amountToPay"
-                  type="number"
-                  value={formData.amountToPay}
-                  onChange={(e) => setFormData(prev => ({ ...prev, amountToPay: Number(e.target.value) }))}
-                  className="pl-7"
-                  placeholder="0"
-                  required
-                />
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Se auto-completa con la tarifa estándar</p>
-            </div>
-
-            <div>
-              <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
-              <Input
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                className="mt-1"
-                placeholder="Ej: Llegar 30 min antes, traer uniforme especial..."
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Botones */}
-      <div className="flex justify-between items-center gap-3 pt-4 border-t bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
-        <div className="text-sm text-gray-600">
-          {selectedBooking && selectedStaff ? (
-            <span className="font-medium text-green-600">✓ Listo para asignar</span>
-          ) : (
-            <span>Completa los pasos para continuar</span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting || !selectedBooking || !selectedStaff || !formData.role}
-            className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-          >
-            {isSubmitting ? "Asignando..." : "✓ Asignar Personal"}
-          </Button>
-        </div>
-      </div>
-    </form>
+    </div>
   )
 }
 
@@ -896,7 +956,7 @@ function AssignmentForm({ onClose }: { onClose: () => void }) {
 function PagosTab() {
   const pendingPayments = useQuery(api.staff.getPendingPayments)
   const paidPayments = useQuery(api.staff.getPaidPayments)
-  const paymentSummary = useQuery(api.staff.getPaymentSummary)
+  const paymentSummary = useQuery(api.staff.getPaymentSummary, {})
   const updatePaymentStatus = useMutation(api.staff.updatePaymentStatus)
   const [viewMode, setViewMode] = useState<"pending" | "paid">("pending")
 
@@ -1066,36 +1126,46 @@ function PagosTab() {
                     </CardHeader>
                     <CardContent className="pt-4">
                       <div className="space-y-3">
-                        {group.payments.map((payment: any) => (
-                          <div key={payment._id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-semibold text-sm">{payment.staff?.name}</h4>
-                                <Badge variant="outline" className="text-xs">{payment.role}</Badge>
-                                <Badge variant={payment.confirmedAttendance ? "default" : "secondary"} className="text-xs">
-                                  {payment.confirmedAttendance ? "Confirmado" : "Sin confirmar"}
-                                </Badge>
+                        {group.payments.map((payment: any) => {
+                          const config = getCategoryConfig(payment.role)
+                          const RoleIcon = config.icon
+                          const initials = payment.staff?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || "?"
+                          return (
+                            <div key={payment._id} className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-sm transition-shadow">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className={`w-9 h-9 rounded-full ${config.color} flex items-center justify-center text-white font-medium text-xs flex-shrink-0`}>
+                                  {initials}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium text-sm truncate">{payment.staff?.name}</h4>
+                                    <RoleIcon className={`w-3.5 h-3.5 ${config.textColor}`} />
+                                    <Badge variant={payment.confirmedAttendance ? "default" : "secondary"} className="text-xs">
+                                      {payment.confirmedAttendance ? "Confirmado" : "Pendiente"}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-0.5">
+                                    {payment.scheduledStartTime} - {payment.scheduledEndTime}
+                                  </p>
+                                </div>
                               </div>
-                              <p className="text-xs text-gray-500">
-                                {payment.scheduledStartTime} - {payment.scheduledEndTime}
-                              </p>
+                              <div className="flex items-center gap-3 ml-2">
+                                <p className="text-lg font-bold text-gray-900">
+                                  ${payment.amountToPay.toLocaleString()}
+                                </p>
+                                <Button
+                                  onClick={() => handleMarkAsPaid(payment._id)}
+                                  disabled={!payment.confirmedAttendance}
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Pagar
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <p className="text-lg font-bold text-gray-900">
-                                ${payment.amountToPay.toLocaleString()}
-                              </p>
-                              <Button
-                                onClick={() => handleMarkAsPaid(payment._id)}
-                                disabled={!payment.confirmedAttendance}
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Marcar Pagado
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -1147,52 +1217,34 @@ function PagosTab() {
                     </CardHeader>
                     <CardContent className="pt-4">
                       <div className="space-y-3">
-                        {group.payments.map((payment: any) => (
-                          <div key={payment._id} className="p-3 border border-green-200 rounded-lg bg-green-50/30">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="font-semibold text-sm">{payment.staff?.name}</h4>
-                                  <Badge variant="outline" className="text-xs bg-white">{payment.role}</Badge>
+                        {group.payments.map((payment: any) => {
+                          const config = getCategoryConfig(payment.role)
+                          const RoleIcon = config.icon
+                          const initials = payment.staff?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || "?"
+                          return (
+                            <div key={payment._id} className="flex items-center gap-3 p-3 bg-white border rounded-lg">
+                              <div className={`w-9 h-9 rounded-full ${config.color} flex items-center justify-center text-white font-medium text-xs flex-shrink-0`}>
+                                {initials}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium text-sm truncate">{payment.staff?.name}</h4>
+                                  <RoleIcon className={`w-3.5 h-3.5 ${config.textColor}`} />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-                                  <div>
-                                    <span className="text-gray-600">Horario:</span>
-                                    <span className="ml-2 font-medium">
-                                      {payment.scheduledStartTime} - {payment.scheduledEndTime}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">Fecha de pago:</span>
-                                    <span className="ml-2 font-medium">
-                                      {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString("es-CL") : "N/A"}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">Método:</span>
-                                    <span className="ml-2 font-medium">
-                                      {payment.paymentMethod || "Efectivo"}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-gray-600">Monto:</span>
-                                    <span className="ml-2 font-bold text-green-600">
-                                      ${payment.amountToPay.toLocaleString()}
-                                    </span>
-                                  </div>
+                                <div className="flex flex-wrap gap-x-3 text-xs text-gray-500 mt-0.5">
+                                  <span>{payment.scheduledStartTime} - {payment.scheduledEndTime}</span>
+                                  <span>•</span>
+                                  <span>{payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString("es-CL") : "N/A"}</span>
+                                  <span>•</span>
+                                  <span>{payment.paymentMethod || "Efectivo"}</span>
                                 </div>
-
-                                {payment.notes && (
-                                  <div className="mt-2 text-xs">
-                                    <span className="text-gray-600">Notas:</span>
-                                    <p className="text-gray-700 mt-0.5">{payment.notes}</p>
-                                  </div>
-                                )}
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-green-600">${payment.amountToPay.toLocaleString()}</p>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     </CardContent>
                   </Card>

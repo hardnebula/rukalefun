@@ -2,12 +2,16 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Users, Star, Camera, Sparkles, MapPin } from "lucide-react"
+import { Calendar, Users, Star, Camera, Sparkles, MapPin, Heart, Gift, ArrowRight, Play, MessageCircle, Send, Bookmark } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import FAQSection from "@/components/sections/FAQSection"
+import FloralCorner from "@/components/invitations/decorations/FloralCorner"
+import LeafBranch from "@/components/invitations/decorations/LeafBranch"
+import { LocalBusinessSchema } from "@/components/seo/StructuredData"
 
 export default function HomePage() {
   const testimonials = useQuery(api.testimonials.getPublicTestimonials)
@@ -15,15 +19,23 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Schema.org LocalBusiness para SEO local */}
+      <LocalBusinessSchema />
+
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section
+        className="relative h-screen flex items-center justify-center overflow-hidden"
+        aria-label="Bienvenida"
+      >
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 z-10" />
           <img
             src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2400"
-            alt="Centro de eventos Ruka Lefún rodeado de naturaleza"
+            alt="Centro de eventos Ruka Lefún en Villarrica - salón para matrimonios y eventos corporativos rodeado de naturaleza"
             className="w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
 
@@ -34,14 +46,17 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-2">
               Ruka Lefún
             </h1>
+            <p className="text-2xl md:text-3xl font-light text-white/90 mb-6">
+              Centro de eventos en Villarrica
+            </p>
             <p className="text-xl md:text-2xl text-white/90 mb-8">
-              Centro de eventos rodeado por la naturaleza del sur de Chile
+              Matrimonios, eventos corporativos y celebraciones en el sur de Chile
             </p>
             <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
-              En el corazón de Villarrica, creamos experiencias inolvidables para tus momentos más especiales
+              Salones rodeados de naturaleza para crear experiencias inolvidables en la Araucanía
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/reservas">
@@ -74,11 +89,11 @@ export default function HomePage() {
       </section>
 
       {/* ¿Por qué elegirnos? */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white" aria-labelledby="porque-elegirnos">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              El Lugar Perfecto para tu Evento
+            <h2 id="porque-elegirnos" className="text-4xl font-bold text-gray-900 mb-4">
+              El Lugar Perfecto para tu Evento en Villarrica
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Combinamos naturaleza, elegancia y servicio excepcional para crear momentos inolvidables
@@ -122,7 +137,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-base">
-                    Salones adaptables para bodas, eventos corporativos, cumpleaños y celebraciones de todo tipo.
+                    Salones adaptables para matrimonios, eventos corporativos, cumpleaños y celebraciones de todo tipo.
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -153,14 +168,14 @@ export default function HomePage() {
       </section>
 
       {/* Espacios Disponibles */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50" aria-labelledby="nuestros-espacios">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Nuestros Espacios
+            <h2 id="nuestros-espacios" className="text-4xl font-bold text-gray-900 mb-4">
+              Nuestros Espacios para Eventos
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Cada espacio diseñado para crear la atmósfera perfecta para tu celebración
+              Salones y áreas al aire libre diseñados para matrimonios, cumpleaños y eventos corporativos
             </p>
           </div>
 
@@ -172,6 +187,19 @@ export default function HomePage() {
                   "https://images.unsplash.com/photo-1505236858219-8359eb29e329?q=80&w=800",
                   "https://images.unsplash.com/photo-1519167758481-83f29da8dbc6?q=80&w=800"
                 ];
+                // Use local images for spaces
+                const getSpaceImage = () => {
+                  if (space.name.toLowerCase().includes("principal")) {
+                    return "/Salon Principal/SalonPrincipal.jpeg";
+                  }
+                  if (space.name.toLowerCase().includes("ceremonia")) {
+                    return "/Ceremonia/Ceremonia al aire libre.webp";
+                  }
+                  if (space.name.toLowerCase().includes("cocktail")) {
+                    return "/cocktail/Cocktail al aire libre.webp";
+                  }
+                  return space.images?.[0] || fallbackImages[index % fallbackImages.length];
+                };
                 return (
                 <motion.div
                   key={space._id}
@@ -180,17 +208,19 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card className="overflow-hidden hover:shadow-xl transition-shadow">
+                  <Card className="overflow-hidden hover:shadow-xl transition-shadow" itemScope itemType="https://schema.org/Place">
                     <div className="h-48 relative overflow-hidden group">
-                      <img 
-                        src={space.images?.[0] || fallbackImages[index % fallbackImages.length]} 
-                        alt={space.name}
+                      <img
+                        src={getSpaceImage()}
+                        alt={`${space.name} - espacio para eventos en Ruka Lefún Villarrica`}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                        itemProp="image"
                       />
                     </div>
                     <CardHeader>
-                      <CardTitle>{space.name}</CardTitle>
-                      <CardDescription className="line-clamp-3">{space.description}</CardDescription>
+                      <CardTitle itemProp="name">{space.name}</CardTitle>
+                      <CardDescription className="line-clamp-3" itemProp="description">{space.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Link href={`/espacios#${space._id}`} className="block">
@@ -227,18 +257,412 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Video Promocional - Instagram Style */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-center lg:text-left order-2 lg:order-1"
+            >
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-orange-500/10 text-pink-600 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+                <Play className="w-4 h-4" />
+                Mira Nuestro Espacio
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Vive la Experiencia Ruka Lefun
+              </h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-lg">
+                Descubre por que somos el lugar favorito para celebrar los momentos mas importantes.
+                Naturaleza, elegancia y un servicio excepcional te esperan.
+              </p>
+              <div className="flex flex-wrap gap-4 mb-8 justify-center lg:justify-start">
+                <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 text-sm">
+                  <MapPin className="w-4 h-4 text-nature-forest" />
+                  <span className="text-gray-700">Villarrica, Chile</span>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2 text-sm">
+                  <Users className="w-4 h-4 text-nature-lake" />
+                  <span className="text-gray-700">Hasta 200 personas</span>
+                </div>
+              </div>
+              <Link href="/reservas">
+                <Button size="lg" className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 hover:opacity-90 text-white shadow-lg">
+                  Reserva Tu Evento
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Right side - Phone Mockup Instagram Style */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative flex justify-center order-1 lg:order-2"
+            >
+              {/* Phone Frame - Minimal design */}
+              <div className="relative w-[320px] md:w-[380px]">
+                {/* Phone frame - thin border */}
+                <div className="bg-gray-200 rounded-[2.5rem] p-1 shadow-2xl">
+                  {/* Screen */}
+                  <div className="bg-white rounded-[2.3rem] overflow-hidden">
+                    {/* Instagram Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        {/* Profile pic with gradient border */}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-orange-500 p-[2px]">
+                          <div className="w-full h-full rounded-full bg-white p-[2px]">
+                            <div className="w-full h-full rounded-full bg-nature-forest flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">RL</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">rukalefun</p>
+                          <p className="text-xs text-gray-500">Villarrica, Chile</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <div className="w-1 h-1 bg-gray-900 rounded-full" />
+                        <div className="w-1 h-1 bg-gray-900 rounded-full" />
+                        <div className="w-1 h-1 bg-gray-900 rounded-full" />
+                      </div>
+                    </div>
+
+                    {/* Video Container - Full width */}
+                    <div className="relative aspect-[9/16] bg-black">
+                      <iframe
+                        src="https://www.youtube.com/embed/1XrG-Wv4awU?autoplay=1&mute=1&loop=1&playlist=1XrG-Wv4awU&controls=1&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+                        title="Video promocional Ruka Lefun"
+                        className="absolute inset-0 w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+
+                    {/* Instagram Actions */}
+                    <div className="px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-5">
+                          <Heart className="w-7 h-7 text-gray-900 cursor-pointer hover:text-red-500 transition-colors" />
+                          <MessageCircle className="w-7 h-7 text-gray-900 cursor-pointer hover:text-gray-600 transition-colors" />
+                          <Send className="w-7 h-7 text-gray-900 cursor-pointer hover:text-gray-600 transition-colors" />
+                        </div>
+                        <Bookmark className="w-7 h-7 text-gray-900 cursor-pointer hover:text-gray-600 transition-colors" />
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 mb-1">2,547 Me gusta</p>
+                      <p className="text-sm text-gray-900">
+                        <span className="font-semibold">rukalefun</span>{" "}
+                        <span className="text-gray-700">El lugar perfecto para tus eventos mas especiales</span>
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Ver los 48 comentarios</p>
+                    </div>
+
+                    {/* Home indicator */}
+                    <div className="flex justify-center pb-2">
+                      <div className="w-28 h-1 bg-gray-300 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Invitaciones Digitales - Phone Mockup Section */}
+      <section className="py-20 relative overflow-hidden">
+        {/* Background with diagonal stripes */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[#faf8f5]" />
+          <svg className="absolute right-0 top-0 h-full w-2/3 opacity-50" viewBox="0 0 400 600" preserveAspectRatio="none">
+            <path d="M100,0 L400,0 L400,600 L0,600 Z" fill="#D4C4B0" />
+            <path d="M200,150 L400,80 L400,400 L100,500 Z" fill="#2D5016" />
+          </svg>
+
+          {/* Elementos florales decorativos - esquina superior izquierda */}
+          <div className="absolute top-4 left-4 opacity-30 hidden lg:block">
+            <FloralCorner
+              variant="topLeft"
+              floralStyle="rose"
+              size={160}
+              primaryColor="#D4C4B0"
+              secondaryColor="#2D5016"
+              accentColor="#8B6F47"
+            />
+          </div>
+
+          {/* Rama decorativa - lado izquierdo medio */}
+          <div className="absolute top-1/3 -left-4 opacity-25 hidden lg:block">
+            <LeafBranch
+              direction="right"
+              variant="eucalyptus"
+              color="#2D5016"
+              size={100}
+            />
+          </div>
+
+          {/* Elemento floral sutil - parte inferior */}
+          <div className="absolute bottom-8 left-1/4 opacity-20 hidden md:block">
+            <LeafBranch
+              direction="up"
+              variant="simple"
+              color="#D4C4B0"
+              size={80}
+            />
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left side - Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+              className="text-center lg:text-left"
+            >
+              <div className="inline-flex items-center gap-2 bg-[#2D5016]/10 text-[#2D5016] rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+                <Heart className="w-4 h-4" />
+                Nuevo Servicio
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Invitaciones de Matrimonio Digitales
+              </h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-lg">
+                Sorprende a tus invitados con una invitacion interactiva.
+                Comparte un link unico y recibe confirmaciones de asistencia al instante.
+              </p>
+              <div className="flex flex-wrap gap-4 mb-8 justify-center lg:justify-start">
+                <div className="flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-sm">
+                  <Gift className="w-4 h-4 text-[#2D5016]" />
+                  <span className="text-gray-700">Gratis con tu reserva</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-sm">
+                  <Sparkles className="w-4 h-4 text-[#D4C4B0]" />
+                  <span className="text-gray-700">Personalizable</span>
+                </div>
+              </div>
+              <Link href="/invitaciones">
+                <Button size="lg" className="bg-[#2D5016] hover:bg-[#1f3a0f] text-white shadow-lg">
+                  Crear Mi Invitacion
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Right side - Phone Mockup */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative flex justify-center"
+            >
+              {/* Scroll indicator - notification style */}
+              <div className="absolute left-4 top-1/4 hidden lg:flex flex-col items-end gap-2 z-10">
+                <motion.div
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative"
+                >
+                  <div className="bg-[#2D5016] text-white rounded-full px-4 py-2 text-sm font-medium shadow-lg">
+                    Desliza
+                  </div>
+                </motion.div>
+                {/* Scroll line indicator */}
+                <div className="w-[3px] h-10 rounded-full bg-white/30 relative overflow-hidden mr-6">
+                  <motion.div
+                    animate={{ y: [0, 24, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-full h-4 rounded-full bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Frame - Minimal design */}
+              <div className="relative w-[320px] md:w-[380px]">
+                {/* Phone frame - thin border */}
+                <div className="bg-gray-200 rounded-[2.5rem] p-1 shadow-2xl">
+                  {/* Screen with scrollable invitation preview */}
+                  <div className="bg-[#faf7f2] rounded-[2.3rem] overflow-hidden h-[580px] md:h-[640px]">
+                      <div className="h-full overflow-y-auto scrollbar-hide">
+                        {/* Section 1: Welcome */}
+                        <div
+                          className="min-h-full w-full bg-cover bg-center relative flex items-center justify-center"
+                          style={{
+                            backgroundImage: "url('https://images.unsplash.com/photo-1529634806980-85c3dd6d34ac?q=80&w=800')",
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-black/40" />
+                          <div className="relative text-white p-6 text-center">
+                            <p className="text-xs uppercase tracking-[0.3em] mb-6 opacity-80">Nuestro Matrimonio</p>
+                            <h3 className="font-script text-5xl mb-1">Josefa</h3>
+                            <span className="text-2xl opacity-70">&</span>
+                            <h3 className="font-script text-5xl mb-6">Fernando</h3>
+                            <div className="flex items-center justify-center gap-2 mb-6">
+                              <div className="h-px w-8 bg-white/40" />
+                              <Heart className="w-5 h-5 opacity-60" />
+                              <div className="h-px w-8 bg-white/40" />
+                            </div>
+                            <p className="text-base opacity-90">15 de Marzo, 2025</p>
+                          </div>
+                        </div>
+
+                        {/* Section 2: Countdown */}
+                        <div className="min-h-full w-full bg-[#faf7f2] flex flex-col items-center justify-center p-6">
+                          <p className="text-sm uppercase tracking-[0.2em] text-[#2D5016] mb-4">Faltan</p>
+                          <div className="flex justify-center gap-4 mb-6">
+                            {[
+                              { value: "45", label: "Dias" },
+                              { value: "12", label: "Hrs" },
+                              { value: "30", label: "Min" },
+                            ].map((item) => (
+                              <div key={item.label} className="text-center">
+                                <div className="text-3xl font-light text-[#5c4a3a]">{item.value}</div>
+                                <div className="text-xs uppercase tracking-wider text-[#2D5016]">{item.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="max-w-[200px] text-center border-t border-[#2D5016]/20 pt-4">
+                            <p className="text-sm italic text-[#5c4a3a]/80 leading-relaxed">
+                              "Nada es eterno, salvo un beso sincero y una copa compartida"
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Section 3: Ceremonia */}
+                        <div className="min-h-full w-full bg-[#f5f0e8] flex flex-col items-center justify-center p-6">
+                          <p className="text-sm uppercase tracking-[0.3em] text-[#2D5016] mb-6">Ceremonia</p>
+                          <div className="w-14 h-14 rounded-full bg-[#d4c4b0]/30 flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D5016" strokeWidth="1.5">
+                              <path d="M12 2L14 8H20L15 12L17 18L12 14L7 18L9 12L4 8H10L12 2Z" />
+                            </svg>
+                          </div>
+                          <h4 className="font-script text-3xl text-[#5c4a3a] mb-2">Iglesia San Jose</h4>
+                          <p className="text-sm text-[#2D5016] mb-1">Sabado 15 de Marzo</p>
+                          <p className="text-sm text-[#2D5016] mb-4">16:00 hrs</p>
+                          <button className="text-sm uppercase tracking-wider text-[#2D5016] border border-[#2D5016]/40 rounded-full px-5 py-2">
+                            Ver Mapa
+                          </button>
+                        </div>
+
+                        {/* Section 4: Celebracion */}
+                        <div className="min-h-full w-full bg-[#faf7f2] flex flex-col items-center justify-center p-6">
+                          <p className="text-sm uppercase tracking-[0.3em] text-[#2D5016] mb-6">Celebracion</p>
+                          <div className="w-14 h-14 rounded-full bg-[#d4c4b0]/30 flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D5016" strokeWidth="1.5">
+                              <path d="M12 2C8 2 5 5.5 5 9.5c0 4 3 6.5 7 6.5s7-2.5 7-6.5C19 5.5 16 2 12 2z" />
+                              <path d="M12 16v6" />
+                              <path d="M10 22h4" />
+                            </svg>
+                          </div>
+                          <h4 className="font-script text-3xl text-[#5c4a3a] mb-2">Ruka Lefun</h4>
+                          <p className="text-sm text-[#2D5016]/80 text-center mb-1">Centro de Eventos</p>
+                          <p className="text-sm text-[#2D5016] mb-1">Sabado 15 de Marzo</p>
+                          <p className="text-sm text-[#2D5016] mb-4">18:00 hrs</p>
+                          <button className="text-sm uppercase tracking-wider text-[#2D5016] border border-[#2D5016]/40 rounded-full px-5 py-2">
+                            Ver Mapa
+                          </button>
+                        </div>
+
+                        {/* Section 5: Fiesta */}
+                        <div className="min-h-full w-full bg-[#f5f0e8] flex flex-col items-center justify-center p-6">
+                          <p className="text-sm uppercase tracking-[0.3em] text-[#2D5016] mb-6">¡Vamos a Celebrar!</p>
+                          <div className="flex flex-col gap-4 w-full max-w-[220px]">
+                            <div className="flex items-center gap-3 bg-[#d4c4b0]/20 rounded-xl p-3">
+                              <div className="w-12 h-12 rounded-full bg-[#d4c4b0]/40 flex items-center justify-center flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D5016" strokeWidth="1.5">
+                                  <circle cx="8" cy="18" r="3" />
+                                  <circle cx="18" cy="16" r="3" />
+                                  <path d="M11 18V6l10-2v12" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-[#5c4a3a]">Musica & Baile</p>
+                                <p className="text-xs text-[#2D5016]/70">¡A bailar!</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 bg-[#d4c4b0]/20 rounded-xl p-3">
+                              <div className="w-12 h-12 rounded-full bg-[#d4c4b0]/40 flex items-center justify-center flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 48 48" fill="none" stroke="#2D5016" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M18 6H30L28.5 12L33 42L24 36L15 42L19.5 12L18 6Z" fill="#2D5016" fillOpacity="0.2" />
+                                  <path d="M18 6H30L28.5 12L33 42L24 36L15 42L19.5 12L18 6Z" />
+                                  <path d="M18 6L24 12L30 6" />
+                                  <path d="M21 18L24 22L27 18" strokeWidth="1" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-[#5c4a3a]">Dresscode</p>
+                                <p className="text-xs text-[#2D5016]/70">Formal elegante</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 bg-[#d4c4b0]/20 rounded-xl p-3">
+                              <div className="w-12 h-12 rounded-full bg-[#d4c4b0]/40 flex items-center justify-center flex-shrink-0">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D5016" strokeWidth="1.5">
+                                  <path d="M12 2C8 2 5 6 5 10c0 3 2 5 4 6v4h6v-4c2-1 4-3 4-6 0-4-3-8-7-8z" />
+                                  <path d="M9 22h6" />
+                                  <path d="M12 10v3" />
+                                  <path d="M10.5 11.5h3" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-[#5c4a3a]">Tips</p>
+                                <p className="text-xs text-[#2D5016]/70">Trae abrigo</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section 6: Confirmacion */}
+                        <div className="min-h-full w-full bg-[#faf7f2] flex flex-col items-center justify-center p-6">
+                          <p className="text-sm uppercase tracking-[0.3em] text-[#2D5016] mb-4">Confirma tu Asistencia</p>
+                          <div className="w-14 h-14 rounded-full bg-[#d4c4b0]/30 flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2D5016" strokeWidth="1.5">
+                              <path d="M9 12l2 2 4-4" />
+                              <circle cx="12" cy="12" r="10" />
+                            </svg>
+                          </div>
+                          <h4 className="font-script text-3xl text-[#5c4a3a] mb-4">¿Asistiras?</h4>
+                          <p className="text-sm text-[#2D5016]/80 text-center mb-4 leading-relaxed">
+                            Por favor confirma antes del<br />1 de Marzo, 2025
+                          </p>
+                          <button className="bg-[#2D5016] text-white text-sm uppercase tracking-wider rounded-full px-6 py-2.5">
+                            Confirmar
+                          </button>
+                        </div>
+                      </div>
+                    {/* Home indicator */}
+                    <div className="flex justify-center pb-2 pt-2">
+                      <div className="w-28 h-1 bg-gray-300 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <FAQSection />
 
       {/* Testimonios */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white" aria-labelledby="testimonios">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Lo Que Dicen Nuestros Clientes
+            <h2 id="testimonios" className="text-4xl font-bold text-gray-900 mb-4">
+              Opiniones de Clientes en Ruka Lefún
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              La satisfacción de nuestros clientes es nuestra mayor recompensa
+              Matrimonios y eventos que superaron expectativas en Villarrica
             </p>
           </div>
 
@@ -251,10 +675,14 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
+                  itemScope
+                  itemType="https://schema.org/Review"
                 >
                   <Card className="h-full">
                     <CardHeader>
-                      <div className="flex items-center space-x-1 mb-2">
+                      <div className="flex items-center space-x-1 mb-2" itemProp="reviewRating" itemScope itemType="https://schema.org/Rating">
+                        <meta itemProp="ratingValue" content={String(testimonial.rating)} />
+                        <meta itemProp="bestRating" content="5" />
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
@@ -266,11 +694,11 @@ export default function HomePage() {
                           />
                         ))}
                       </div>
-                      <CardTitle className="text-lg">{testimonial.clientName}</CardTitle>
+                      <CardTitle className="text-lg" itemProp="author">{testimonial.clientName}</CardTitle>
                       <CardDescription>{testimonial.eventType}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-600 italic">"{testimonial.comment}"</p>
+                      <p className="text-gray-600 italic" itemProp="reviewBody">&ldquo;{testimonial.comment}&rdquo;</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -285,7 +713,7 @@ export default function HomePage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 bg-gradient-to-br from-nature-forest via-nature-moss to-nature-emerald text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-nature-forest via-nature-moss to-nature-emerald text-white relative overflow-hidden" aria-labelledby="cta-reserva">
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
@@ -294,11 +722,11 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              ¿Listo para Tu Evento Perfecto?
+            <h2 id="cta-reserva" className="text-4xl md:text-5xl font-bold mb-6">
+              Cotiza tu Evento en Villarrica
             </h2>
             <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-              Contáctanos hoy y comencemos a planificar el evento de tus sueños en Ruka Lefún
+              Reserva tu matrimonio, cumpleaños o evento corporativo en Ruka Lefún
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/reservas">

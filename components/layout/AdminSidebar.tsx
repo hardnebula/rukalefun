@@ -17,6 +17,7 @@ import {
   History,
   UserCog,
   Grid3X3,
+  Heart,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -37,6 +38,7 @@ const menuItems = [
   { title: "Mesas", href: "/admin/mesas", icon: Grid3X3 },
   { title: "Listas de Compras", href: "/admin/listas-compras", icon: ShoppingCart },
   { title: "Historial", href: "/admin/historial", icon: History },
+  { title: "Invitaciones", href: "/admin/invitaciones", icon: Heart },
   { title: "Configuración", href: "/admin/configuracion", icon: Settings },
 ]
 

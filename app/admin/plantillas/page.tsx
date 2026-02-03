@@ -51,8 +51,8 @@ export default function PlantillasCotizacionPage() {
   // Inputs temporales
   const [newService, setNewService] = useState("")
   const [newAdditionalService, setNewAdditionalService] = useState("")
-  const [newMenuSection, setNewMenuSection] = useState({ name: "", items: [] })
-  const [newMenuCategory, setNewMenuCategory] = useState({ category: "", dishes: [] })
+  const [newMenuSection, setNewMenuSection] = useState<{ name: string; items: { category: string; dishes: string[] }[] }>({ name: "", items: [] })
+  const [newMenuCategory, setNewMenuCategory] = useState<{ category: string; dishes: string[] }>({ category: "", dishes: [] })
   const [newDish, setNewDish] = useState("")
 
   const filteredTemplates = templates?.filter(t =>

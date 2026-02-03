@@ -31,7 +31,7 @@ export default function ReservasPage() {
   })
 
   const eventTypes = [
-    "Boda",
+    "Matrimonio",
     "Evento Corporativo",
     "Cumpleaños",
     "Aniversario",

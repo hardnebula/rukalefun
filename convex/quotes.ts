@@ -29,10 +29,12 @@ export const createQuoteRequest = mutation({
     eventDate: v.optional(v.string()),
     numberOfGuests: v.number(),
     message: v.optional(v.string()),
+    source: v.optional(v.string()), // "web" | "whatsapp"
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("quoteRequests", {
       ...args,
+      source: args.source || "web",
       status: "new",
       createdAt: Date.now(),
     });

@@ -26,11 +26,6 @@ import {
   MessageSquare,
   Trash2,
   FileText,
-  Plus,
-  Edit2,
-  ToggleLeft,
-  ToggleRight,
-  FileStack,
   Sparkles,
   PhoneCall,
   FileCheck,
@@ -41,6 +36,7 @@ import {
   DollarSign,
   Clock,
   Eye,
+  MessageCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
@@ -51,17 +47,6 @@ export default function CotizacionesPage() {
   const quotes = useQuery(api.quotes.getAllQuotes)
   const updateQuoteStatus = useMutation(api.quotes.updateQuoteStatus)
   const deleteQuote = useMutation(api.quotes.deleteQuote)
-
-  // Queries y mutations para plantillas
-  const templates = useQuery(api.quoteTemplates.getAllTemplates)
-  const createTemplate = useMutation(api.quoteTemplates.createTemplate)
-  const updateTemplate = useMutation(api.quoteTemplates.updateTemplate)
-  const deleteTemplate = useMutation(api.quoteTemplates.deleteTemplate)
-  const toggleActive = useMutation(api.quoteTemplates.toggleActive)
-
-  // Query para espacios (para el selector al convertir)
-  const spaces = useQuery(api.spaces.getAllSpaces)
-
   // Queries y mutations para historial de cotizaciones generadas
   const conversionStats = useQuery(api.generatedQuotes.getConversionStats)
   const generatedQuotes = useQuery(api.generatedQuotes.getAllGeneratedQuotes)
@@ -78,6 +63,7 @@ export default function CotizacionesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [generatorOpen, setGeneratorOpen] = useState(false)
   const [quoteForGenerator, setQuoteForGenerator] = useState<any>(null)
+  const [quickMode, setQuickMode] = useState(false)
 
   // Estados para historial de cotizaciones
   const [historySearchTerm, setHistorySearchTerm] = useState("")
@@ -90,30 +76,8 @@ export default function CotizacionesPage() {
   const [convertFormData, setConvertFormData] = useState({
     startTime: "12:00",
     endTime: "20:00",
-    spaceId: "none",
     specialRequests: ""
   })
-
-  // Estados para plantillas
-  const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<any>(null)
-  const [templateSearchTerm, setTemplateSearchTerm] = useState("")
-  const [formData, setFormData] = useState({
-    name: "",
-    eventType: "",
-    includedServices: [] as string[],
-    additionalServices: [] as string[],
-    menuSections: [] as any[],
-    pricePerPerson: 0,
-    minimumGuests: 100,
-    currency: "CLP",
-    terms: "",
-    signatureName: "Marcelo Mora Jara",
-    signatureTitle: "Ruka Lefún",
-    signatureLocation: "Villarrica, Chile"
-  })
-  const [newService, setNewService] = useState("")
-  const [newAdditionalService, setNewAdditionalService] = useState("")
 
   // Funciones para cotizaciones
   const filteredQuotes = quotes?.filter((quote) => {
@@ -224,141 +188,6 @@ export default function CotizacionesPage() {
     )
   }
 
-  // Funciones para plantillas
-  const filteredTemplates = templates?.filter(t =>
-    t.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
-    t.eventType.toLowerCase().includes(templateSearchTerm.toLowerCase())
-  )
-
-  const resetTemplateForm = () => {
-    setFormData({
-      name: "",
-      eventType: "",
-      includedServices: [],
-      additionalServices: [],
-      menuSections: [],
-      pricePerPerson: 0,
-      minimumGuests: 100,
-      currency: "CLP",
-      terms: "- La reserva se hace efectiva abonando el 50% del valor total al momento de tomar la decisión de llevar su evento con nosotros y el otro 50%, 10 días antes del evento junto con la confirmación de invitados asistentes.\n\nSolo agregar, nuestro gran compromiso en lograr un momento inolvidable, ocupados de que cada detalle esté cubierto, de manera que ustedes solo se tengan que preocupar de disfrutar de un gran día.",
-      signatureName: "Marcelo Mora Jara",
-      signatureTitle: "Ruka Lefún",
-      signatureLocation: "Villarrica, Chile"
-    })
-    setEditingTemplate(null)
-  }
-
-  const openCreateTemplateForm = () => {
-    resetTemplateForm()
-    setIsTemplateFormOpen(true)
-  }
-
-  const openEditTemplateForm = (template: any) => {
-    setEditingTemplate(template)
-    setFormData({
-      name: template.name,
-      eventType: template.eventType,
-      includedServices: [...template.includedServices],
-      additionalServices: [...template.additionalServices],
-      menuSections: JSON.parse(JSON.stringify(template.menuSections)),
-      pricePerPerson: template.pricePerPerson,
-      minimumGuests: template.minimumGuests,
-      currency: template.currency,
-      terms: template.terms,
-      signatureName: template.signatureName,
-      signatureTitle: template.signatureTitle,
-      signatureLocation: template.signatureLocation
-    })
-    setIsTemplateFormOpen(true)
-  }
-
-  const handleTemplateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.eventType) {
-      toast.error("Nombre y tipo de evento son requeridos")
-      return
-    }
-
-    try {
-      if (editingTemplate) {
-        await updateTemplate({
-          id: editingTemplate._id,
-          ...formData
-        })
-        toast.success("Plantilla actualizada")
-      } else {
-        await createTemplate(formData)
-        toast.success("Plantilla creada")
-      }
-      setIsTemplateFormOpen(false)
-      resetTemplateForm()
-    } catch (error) {
-      toast.error("Error al guardar plantilla")
-    }
-  }
-
-  const handleDeleteTemplate = async (id: string) => {
-    if (!confirm("¿Eliminar esta plantilla?")) return
-
-    try {
-      await deleteTemplate({ id: id as any })
-      toast.success("Plantilla eliminada")
-    } catch (error) {
-      toast.error("Error al eliminar")
-    }
-  }
-
-  const handleToggleActive = async (id: string) => {
-    try {
-      await toggleActive({ id: id as any })
-      toast.success("Estado actualizado")
-    } catch (error) {
-      toast.error("Error al actualizar estado")
-    }
-  }
-
-  const addIncludedService = () => {
-    if (newService.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        includedServices: [...prev.includedServices, newService]
-      }))
-      setNewService("")
-    }
-  }
-
-  const removeIncludedService = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      includedServices: prev.includedServices.filter((_, i) => i !== index)
-    }))
-  }
-
-  const addAdditionalService = () => {
-    if (newAdditionalService.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        additionalServices: [...prev.additionalServices, newAdditionalService]
-      }))
-      setNewAdditionalService("")
-    }
-  }
-
-  const removeAdditionalService = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      additionalServices: prev.additionalServices.filter((_, i) => i !== index)
-    }))
-  }
-
-  const removeMenuSection = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      menuSections: prev.menuSections.filter((_, i) => i !== index)
-    }))
-  }
-
   // Funciones para historial de cotizaciones
   const filteredGeneratedQuotes = generatedQuotes?.filter((quote) => {
     const matchesStatus = historyFilterStatus === "all" || quote.status === historyFilterStatus
@@ -412,7 +241,6 @@ export default function CotizacionesPage() {
         generatedQuoteId: selectedGeneratedQuote._id as any,
         startTime: convertFormData.startTime,
         endTime: convertFormData.endTime,
-        spaceId: convertFormData.spaceId !== "none" ? (convertFormData.spaceId as any) : undefined,
         specialRequests: convertFormData.specialRequests || undefined,
       })
 
@@ -423,7 +251,6 @@ export default function CotizacionesPage() {
       setConvertFormData({
         startTime: "12:00",
         endTime: "20:00",
-        spaceId: "none",
         specialRequests: ""
       })
     } catch (error: any) {
@@ -487,7 +314,7 @@ export default function CotizacionesPage() {
           Cotizaciones
         </h1>
         <p className="text-gray-600">
-          Gestiona solicitudes de cotización y plantillas reutilizables
+          Gestiona solicitudes de cotización e historial
         </p>
       </div>
 
@@ -501,24 +328,21 @@ export default function CotizacionesPage() {
             <History className="w-4 h-4 mr-2" />
             Historial de Cotizaciones
           </TabsTrigger>
-          <TabsTrigger value="plantillas">
-            <FileStack className="w-4 h-4 mr-2" />
-            Plantillas
-          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Solicitudes */}
         <TabsContent value="solicitudes" className="space-y-6">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               onClick={() => {
                 setQuoteForGenerator(null)
+                setQuickMode(true)
                 setGeneratorOpen(true)
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-green-600 hover:bg-green-700"
             >
-              <FileText className="w-5 h-5 mr-2" />
-              Crear Cotización
+              <Sparkles className="w-5 h-5 mr-2" />
+              Cotización Rápida
             </Button>
           </div>
 
@@ -592,6 +416,12 @@ export default function CotizacionesPage() {
                               ¡NUEVA!
                             </div>
                           )}
+                          {quote.source === "whatsapp" && (
+                            <Badge variant="outline" className="border-green-500 text-green-700 text-xs">
+                              <MessageCircle className="w-3 h-3 mr-1" />
+                              WhatsApp
+                            </Badge>
+                          )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -647,16 +477,30 @@ export default function CotizacionesPage() {
 
                         <Button
                           size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setQuoteForGenerator(quote)
+                            setQuickMode(true)
+                            setGeneratorOpen(true)
+                          }}
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Rápida
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="outline"
                           className="bg-blue-50 hover:bg-blue-100 text-blue-700"
                           onClick={(e) => {
                             e.stopPropagation()
                             setQuoteForGenerator(quote)
+                            setQuickMode(false)
                             setGeneratorOpen(true)
                           }}
                         >
                           <FileText className="h-4 w-4 mr-2" />
-                          Generar Cotización
+                          Con Edición
                         </Button>
                         {quote.status === "new" && (
                           <Button
@@ -834,6 +678,27 @@ export default function CotizacionesPage() {
                           <div className="flex items-center gap-3 mb-3 flex-wrap">
                             <h3 className="text-lg font-semibold text-gray-900">{quote.clientName}</h3>
                             {getGeneratedQuoteStatusBadge(quote.status)}
+                            {/* Indicador de expiración */}
+                            {quote.status === "pending" && quote.daysUntilExpiry !== null && (
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${
+                                  quote.daysUntilExpiry <= 3
+                                    ? "border-red-500 text-red-600 bg-red-50"
+                                    : quote.daysUntilExpiry <= 7
+                                    ? "border-orange-500 text-orange-600 bg-orange-50"
+                                    : "border-gray-400 text-gray-600"
+                                }`}
+                              >
+                                <Clock className="w-3 h-3 mr-1" />
+                                {quote.isExpired
+                                  ? "Expirada"
+                                  : quote.daysUntilExpiry === 1
+                                  ? "1 día restante"
+                                  : `${quote.daysUntilExpiry} días restantes`
+                                }
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
@@ -922,99 +787,6 @@ export default function CotizacionesPage() {
           </div>
         </TabsContent>
 
-        {/* Tab: Plantillas */}
-        <TabsContent value="plantillas" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <Card className="flex-1 mr-4">
-              <CardContent className="pt-6">
-                <Input
-                  placeholder="Buscar plantillas..."
-                  value={templateSearchTerm}
-                  onChange={(e) => setTemplateSearchTerm(e.target.value)}
-                />
-              </CardContent>
-            </Card>
-            <Button
-              onClick={openCreateTemplateForm}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nueva Plantilla
-            </Button>
-          </div>
-
-          {/* Lista de plantillas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates?.map((template) => (
-              <Card key={template._id} className={!template.isActive ? "opacity-60" : ""}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-1">{template.name}</CardTitle>
-                      <p className="text-sm text-gray-600">{template.eventType}</p>
-                    </div>
-                    <Badge variant={template.isActive ? "default" : "secondary"}>
-                      {template.isActive ? "Activa" : "Inactiva"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Precio por persona:</span>
-                      <span className="font-semibold">
-                        ${template.pricePerPerson.toLocaleString()} {template.currency}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Mínimo de invitados:</span>
-                      <span>{template.minimumGuests}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Servicios incluidos:</span>
-                      <span>{template.includedServices.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Secciones de menú:</span>
-                      <span>{template.menuSections.length}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggleActive(template._id)}
-                      className="flex-1"
-                    >
-                      {template.isActive ? (
-                        <ToggleRight className="w-4 h-4 mr-1" />
-                      ) : (
-                        <ToggleLeft className="w-4 h-4 mr-1" />
-                      )}
-                      {template.isActive ? "Desactivar" : "Activar"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditTemplateForm(template)}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteTemplate(template._id)}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Dialog de Detalles de Cotización */}
@@ -1178,7 +950,6 @@ export default function CotizacionesPage() {
                     })()}
                   </div>
 
-                  {/* Botón de eliminar si está rechazada */}
                   {selectedQuote.status === "declined" && (
                     <Button
                       variant="destructive"
@@ -1243,236 +1014,6 @@ export default function CotizacionesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Formulario de Plantilla */}
-      <Dialog open={isTemplateFormOpen} onOpenChange={setIsTemplateFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingTemplate ? "Editar Plantilla" : "Nueva Plantilla de Cotización"}
-            </DialogTitle>
-            <DialogDescription>
-              Configura todos los detalles de la plantilla de cotización
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleTemplateSubmit} className="space-y-6">
-            {/* Información básica */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Información Básica</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Nombre de la Plantilla *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ej: Paseo Familiar DUOC"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Tipo de Evento *</Label>
-                  <Input
-                    value={formData.eventType}
-                    onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                    placeholder="Ej: Paseo Familiar"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Servicios Incluidos */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Servicios Incluidos</h3>
-              <div className="flex gap-2">
-                <Input
-                  value={newService}
-                  onChange={(e) => setNewService(e.target.value)}
-                  placeholder="Agregar servicio..."
-                  onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addIncludedService())}
-                />
-                <Button type="button" onClick={addIncludedService}>Agregar</Button>
-              </div>
-              <div className="border rounded-lg p-4 max-h-40 overflow-y-auto">
-                {formData.includedServices.length === 0 ? (
-                  <p className="text-sm text-gray-500">No hay servicios agregados</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {formData.includedServices.map((service, i) => (
-                      <li key={i} className="flex justify-between items-center text-sm">
-                        <span>• {service}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeIncludedService(i)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            {/* Servicios Adicionales */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Servicios Adicionales Incluidos</h3>
-              <div className="flex gap-2">
-                <Input
-                  value={newAdditionalService}
-                  onChange={(e) => setNewAdditionalService(e.target.value)}
-                  placeholder="Agregar servicio adicional..."
-                  onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addAdditionalService())}
-                />
-                <Button type="button" onClick={addAdditionalService}>Agregar</Button>
-              </div>
-              <div className="border rounded-lg p-4 max-h-32 overflow-y-auto">
-                {formData.additionalServices.length === 0 ? (
-                  <p className="text-sm text-gray-500">No hay servicios adicionales</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {formData.additionalServices.map((service, i) => (
-                      <li key={i} className="flex justify-between items-center text-sm">
-                        <span>• {service}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeAdditionalService(i)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            {/* Menú (simplificado) */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Secciones de Menú</h3>
-              <p className="text-sm text-gray-600">
-                Las secciones de menú se pueden configurar aquí. Por ahora, se mostrarán las existentes.
-              </p>
-              <div className="border rounded-lg p-4">
-                {formData.menuSections.length === 0 ? (
-                  <p className="text-sm text-gray-500">No hay secciones de menú configuradas</p>
-                ) : (
-                  <div className="space-y-2">
-                    {formData.menuSections.map((section, i) => (
-                      <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <span className="text-sm font-medium">{section.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeMenuSection(i)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Precios */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Precios</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Precio por Persona *</Label>
-                  <Input
-                    type="number"
-                    value={formData.pricePerPerson}
-                    onChange={(e) => setFormData({ ...formData, pricePerPerson: parseFloat(e.target.value) || 0 })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Mínimo de Invitados *</Label>
-                  <Input
-                    type="number"
-                    value={formData.minimumGuests}
-                    onChange={(e) => setFormData({ ...formData, minimumGuests: parseInt(e.target.value) || 0 })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Moneda</Label>
-                  <Input
-                    value={formData.currency}
-                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    placeholder="CLP"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Términos */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Términos y Condiciones</h3>
-              <Textarea
-                value={formData.terms}
-                onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                rows={6}
-                placeholder="Términos y condiciones..."
-              />
-            </div>
-
-            {/* Firma */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Información de Firma</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Nombre</Label>
-                  <Input
-                    value={formData.signatureName}
-                    onChange={(e) => setFormData({ ...formData, signatureName: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Título/Empresa</Label>
-                  <Input
-                    value={formData.signatureTitle}
-                    onChange={(e) => setFormData({ ...formData, signatureTitle: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Ubicación</Label>
-                  <Input
-                    value={formData.signatureLocation}
-                    onChange={(e) => setFormData({ ...formData, signatureLocation: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Botones */}
-            <div className="flex gap-2 pt-4">
-              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
-                {editingTemplate ? "Actualizar Plantilla" : "Crear Plantilla"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsTemplateFormOpen(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Dialog de Detalles de Cotización Generada */}
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1498,7 +1039,7 @@ export default function CotizacionesPage() {
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent>
                       <SelectItem value="pending">Pendiente</SelectItem>
                       <SelectItem value="converted">Convertida</SelectItem>
                       <SelectItem value="declined">Rechazada</SelectItem>
@@ -1754,26 +1295,6 @@ export default function CotizacionesPage() {
                 </div>
 
                 <div>
-                  <Label>Espacio (Opcional)</Label>
-                  <Select
-                    value={convertFormData.spaceId}
-                    onValueChange={(value) => setConvertFormData({ ...convertFormData, spaceId: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar espacio (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin espacio específico</SelectItem>
-                      {spaces?.filter(s => s.isActive).map(space => (
-                        <SelectItem key={space._id} value={space._id}>
-                          {space.name} - Capacidad: {space.capacity}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
                   <Label>Solicitudes Especiales (Opcional)</Label>
                   <Textarea
                     value={convertFormData.specialRequests}
@@ -1818,9 +1339,12 @@ export default function CotizacionesPage() {
         onClose={() => {
           setGeneratorOpen(false)
           setQuoteForGenerator(null)
+          setQuickMode(false)
         }}
         quoteRequest={quoteForGenerator}
+        quickMode={quickMode}
       />
+
     </div>
   )
 }

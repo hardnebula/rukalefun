@@ -31,6 +31,10 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
+  Download,
+  Heart,
+  Mail,
+  AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import jsPDF from "jspdf"
@@ -51,6 +55,7 @@ export default function MesasPage() {
   const [isGeneratingCode, setIsGeneratingCode] = useState(false)
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false)
   const [isEditGuestOpen, setIsEditGuestOpen] = useState(false)
+  const [isImportRsvpOpen, setIsImportRsvpOpen] = useState(false)
   const [selectedTable, setSelectedTable] = useState<any>(null)
   const [editingGuest, setEditingGuest] = useState<any>(null)
   const [editingTableTitle, setEditingTableTitle] = useState<string | null>(null)
@@ -72,6 +77,15 @@ export default function MesasPage() {
     api.tables.getTableOccupancyByBooking,
     selectedBooking ? { bookingId: selectedBooking as any } : "skip"
   )
+
+  // Query para obtener RSVPs pendientes de importar
+  const pendingRsvps = useQuery(
+    api.tables.getPendingRsvpsForImport,
+    selectedBooking ? { bookingId: selectedBooking as any } : "skip"
+  )
+
+  // Mutation para importar RSVPs
+  const importRsvps = useMutation(api.tables.importRsvpsToTables)
 
   const confirmedBookings = bookings?.filter(b => b.status === "confirmed") || []
   const selectedBookingData = confirmedBookings.find(b => b._id === selectedBooking)
@@ -310,6 +324,22 @@ export default function MesasPage() {
             <CardTitle>Seleccionar Evento</CardTitle>
             {selectedBooking && (
               <div className="flex items-center gap-2">
+                {/* Botón Importar RSVPs - solo si hay invitación vinculada */}
+                {pendingRsvps?.invitation && (
+                  <Button
+                    onClick={() => setIsImportRsvpOpen(true)}
+                    variant="outline"
+                    className="flex items-center gap-2 text-pink-600 border-pink-200 hover:bg-pink-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    Importar RSVPs
+                    {pendingRsvps.summary && pendingRsvps.summary.pendingToImport > 0 && (
+                      <Badge className="ml-1 bg-pink-500">
+                        {pendingRsvps.summary.pendingGuestCount}
+                      </Badge>
+                    )}
+                  </Button>
+                )}
                 <Button
                   onClick={() => setIsShareDialogOpen(true)}
                   variant="outline"
@@ -657,6 +687,24 @@ export default function MesasPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Importar RSVPs */}
+      <Dialog open={isImportRsvpOpen} onOpenChange={setIsImportRsvpOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-pink-600" />
+              Importar RSVPs de Invitación
+            </DialogTitle>
+          </DialogHeader>
+          <ImportRsvpContent
+            bookingId={selectedBooking}
+            pendingRsvps={pendingRsvps}
+            importRsvps={importRsvps}
+            onClose={() => setIsImportRsvpOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -799,6 +847,230 @@ function ShareWithCoupleContent({
           </Button>
         </div>
       )}
+    </div>
+  )
+}
+
+// Componente para importar RSVPs
+function ImportRsvpContent({
+  bookingId,
+  pendingRsvps,
+  importRsvps,
+  onClose,
+}: {
+  bookingId: string
+  pendingRsvps: any
+  importRsvps: any
+  onClose: () => void
+}) {
+  const [selectedRsvps, setSelectedRsvps] = useState<string[]>([])
+  const [autoAssign, setAutoAssign] = useState(true)
+  const [isImporting, setIsImporting] = useState(false)
+
+  if (!pendingRsvps?.invitation) {
+    return (
+      <div className="text-center py-8">
+        <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+        <p className="text-gray-600">Este evento no tiene una invitación vinculada.</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Primero crea una invitación desde el módulo de Invitaciones y vincula este evento.
+        </p>
+      </div>
+    )
+  }
+
+  const { invitation, rsvps, summary } = pendingRsvps
+
+  if (rsvps.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
+        <p className="text-gray-600">No hay RSVPs pendientes de importar.</p>
+        {summary && summary.alreadyImported > 0 && (
+          <p className="text-sm text-gray-500 mt-2">
+            Ya se han importado {summary.alreadyImported} RSVPs anteriormente.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  const toggleRsvp = (rsvpId: string) => {
+    setSelectedRsvps((prev) =>
+      prev.includes(rsvpId)
+        ? prev.filter((id) => id !== rsvpId)
+        : [...prev, rsvpId]
+    )
+  }
+
+  const selectAll = () => {
+    setSelectedRsvps(rsvps.map((r: any) => r._id))
+  }
+
+  const deselectAll = () => {
+    setSelectedRsvps([])
+  }
+
+  const selectedGuestCount = rsvps
+    .filter((r: any) => selectedRsvps.includes(r._id))
+    .reduce((sum: number, r: any) => sum + r.numberOfGuests, 0)
+
+  const handleImport = async () => {
+    if (selectedRsvps.length === 0) {
+      toast.error("Selecciona al menos un RSVP para importar")
+      return
+    }
+
+    setIsImporting(true)
+    try {
+      const result = await importRsvps({
+        bookingId: bookingId as any,
+        rsvpIds: selectedRsvps as any,
+        autoAssign,
+      })
+      toast.success(result.message)
+      onClose()
+    } catch (error: any) {
+      toast.error(error.message || "Error al importar RSVPs")
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Info de la invitación */}
+      <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Heart className="w-5 h-5 text-pink-600" />
+          <span className="font-medium text-pink-900">
+            {invitation.person1Name} & {invitation.person2Name}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-pink-600">Confirmados</div>
+            <div className="text-lg font-bold text-pink-900">{summary.totalConfirmed}</div>
+          </div>
+          <div>
+            <div className="text-green-600">Ya importados</div>
+            <div className="text-lg font-bold text-green-900">{summary.alreadyImported}</div>
+          </div>
+          <div>
+            <div className="text-orange-600">Pendientes</div>
+            <div className="text-lg font-bold text-orange-900">{summary.pendingGuestCount} personas</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de RSVPs */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <Label>RSVPs pendientes de importar</Label>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={selectAll}>
+              Seleccionar todos
+            </Button>
+            <Button variant="ghost" size="sm" onClick={deselectAll}>
+              Deseleccionar
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
+          {rsvps.map((rsvp: any) => (
+            <div
+              key={rsvp._id}
+              onClick={() => toggleRsvp(rsvp._id)}
+              className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                selectedRsvps.includes(rsvp._id)
+                  ? "bg-pink-100 border-pink-300 border"
+                  : "bg-gray-50 hover:bg-gray-100 border border-transparent"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedRsvps.includes(rsvp._id)}
+                  onChange={() => toggleRsvp(rsvp._id)}
+                  className="rounded"
+                />
+                <div>
+                  <div className="font-medium">{rsvp.guestName}</div>
+                  <div className="text-sm text-gray-500 flex items-center gap-2">
+                    <Users className="w-3 h-3" />
+                    {rsvp.numberOfGuests} {rsvp.numberOfGuests === 1 ? "persona" : "personas"}
+                    {rsvp.guestEmail && (
+                      <>
+                        <Mail className="w-3 h-3 ml-2" />
+                        {rsvp.guestEmail}
+                      </>
+                    )}
+                  </div>
+                  {rsvp.dietaryRestrictions && (
+                    <div className="text-xs text-orange-600 mt-1">
+                      Restricciones: {rsvp.dietaryRestrictions}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Badge variant="outline" className="text-green-600 border-green-200">
+                Confirmado
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Opciones */}
+      <div className="flex items-center gap-2 py-2">
+        <input
+          type="checkbox"
+          id="autoAssign"
+          checked={autoAssign}
+          onChange={(e) => setAutoAssign(e.target.checked)}
+          className="rounded"
+        />
+        <Label htmlFor="autoAssign" className="cursor-pointer">
+          Asignar automáticamente a mesas disponibles
+        </Label>
+      </div>
+
+      {/* Resumen y botón */}
+      <div className="flex items-center justify-between pt-4 border-t">
+        <div className="text-sm text-gray-600">
+          {selectedRsvps.length > 0 ? (
+            <>
+              <span className="font-medium">{selectedRsvps.length}</span> RSVPs seleccionados
+              ({selectedGuestCount} personas)
+            </>
+          ) : (
+            "Selecciona los RSVPs a importar"
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleImport}
+            disabled={selectedRsvps.length === 0 || isImporting}
+            className="bg-pink-600 hover:bg-pink-700"
+          >
+            {isImporting ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Importando...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Importar {selectedGuestCount > 0 && `(${selectedGuestCount})`}
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

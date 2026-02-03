@@ -72,7 +72,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Servicios</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li>Bodas</li>
+              <li>Matrimonios</li>
               <li>Eventos Corporativos</li>
               <li>Cumpleaños</li>
               <li>Aniversarios</li>

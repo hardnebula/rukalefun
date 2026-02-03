@@ -200,7 +200,7 @@ export default function TestimoniosPage() {
                   setFormData({ ...formData, eventType: e.target.value })
                 }
                 required
-                placeholder="Ej: Boda, Evento Corporativo"
+                placeholder="Ej: Matrimonio, Evento Corporativo"
               />
             </div>
 

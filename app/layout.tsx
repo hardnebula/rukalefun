@@ -1,28 +1,40 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Playfair_Display, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
 import { ConvexProvider } from "@/components/providers/ConvexProvider"
 import { OrganizationSchema, WebsiteSchema } from "@/components/seo/StructuredData"
 
 const inter = Inter({ subsets: ["latin"] })
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+})
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-script",
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+})
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.rukalefun.cl'),
   title: {
-    default: "Ruka Lefún - Centro de Eventos Villarrica",
-    template: "%s | Ruka Lefún"
+    default: "Ruka Lefún | Centro de Eventos y Matrimonios en Villarrica, Chile",
+    template: "%s | Ruka Lefún - Eventos Villarrica"
   },
-  description: "Centro de eventos rodeado por la naturaleza del sur de Chile en Villarrica. El lugar perfecto para bodas, eventos corporativos y celebraciones especiales.",
+  description: "Arrienda salones para matrimonios, cumpleaños y eventos corporativos en Villarrica. Centro de eventos rodeado de naturaleza en la Araucanía. Cotiza gratis.",
   keywords: [
     "centro de eventos villarrica",
-    "eventos villarrica",
-    "bodas villarrica",
-    "eventos corporativos chile",
-    "salón de eventos",
-    "matrimonios sur de chile",
-    "centro de eventos araucanía",
-    "celebraciones villarrica",
-    "eventos naturaleza chile",
+    "matrimonios villarrica",
+    "salón de eventos araucanía",
+    "arriendo salón matrimonio villarrica",
+    "eventos corporativos villarrica",
+    "cumpleaños villarrica",
+    "fiestas villarrica chile",
+    "centro eventos sur de chile",
+    "matrimonios araucanía",
     "ruka lefún"
   ],
   authors: [{ name: "Ruka Lefún" }],
@@ -38,21 +50,21 @@ export const metadata: Metadata = {
     locale: "es_CL",
     url: "https://www.rukalefun.cl",
     siteName: "Ruka Lefún",
-    title: "Ruka Lefún - Centro de Eventos Villarrica",
-    description: "Centro de eventos rodeado por la naturaleza del sur de Chile en Villarrica. El lugar perfecto para bodas, eventos corporativos y celebraciones especiales.",
+    title: "Ruka Lefún | Matrimonios y Eventos en Villarrica, Chile",
+    description: "Arrienda salones para matrimonios, cumpleaños y eventos corporativos en Villarrica. Rodeados de naturaleza en la Araucanía. Cotiza gratis.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Ruka Lefún - Centro de Eventos",
+        alt: "Ruka Lefún - Centro de Eventos para Matrimonios en Villarrica Chile",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ruka Lefún - Centro de Eventos Villarrica",
-    description: "Centro de eventos rodeado por la naturaleza del sur de Chile en Villarrica.",
+    title: "Ruka Lefún | Eventos y Matrimonios en Villarrica",
+    description: "Salones para matrimonios y eventos corporativos rodeados de naturaleza en el sur de Chile. Cotiza gratis.",
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -79,7 +91,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${playfair.variable} ${cormorant.variable}`}>
         <OrganizationSchema />
         <WebsiteSchema />
         <ConvexProvider>

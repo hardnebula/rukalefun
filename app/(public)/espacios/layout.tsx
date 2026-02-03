@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Espacios",
-  description: "Descubre nuestros espacios versátiles diseñados para hacer de tu evento una experiencia única. Salones para bodas, eventos corporativos, cumpleaños y celebraciones en Villarrica.",
+  description: "Descubre nuestros espacios versátiles diseñados para hacer de tu evento una experiencia única. Salones para matrimonios, eventos corporativos, cumpleaños y celebraciones en Villarrica.",
   keywords: [
     "espacios para eventos",
     "salones villarrica",
-    "espacios bodas",
+    "espacios matrimonios",
     "salones eventos corporativos",
     "capacidad eventos villarrica",
   ],

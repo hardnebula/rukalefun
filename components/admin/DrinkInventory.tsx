@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Trash2, Wine, Beer, Check, PackageCheck, Package } from "lucide-react"
+import { Plus, Trash2, Wine, Beer, Check, PackageCheck, Package, Share2, Copy, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 
 interface DrinkInventoryProps {
   bookingId: string
+  guestAccessCode?: string | null
 }
 
 const DRINK_TYPES = [
@@ -24,7 +25,10 @@ const DRINK_TYPES = [
   { value: "whisky", label: "Whisky" },
   { value: "ron", label: "Ron" },
   { value: "vodka", label: "Vodka" },
+  { value: "tequila", label: "Tequila" },
+  { value: "gin", label: "Gin" },
   { value: "champagne", label: "Champagne" },
+  { value: "bebida", label: "Bebida" },
   { value: "otro", label: "Otro" },
 ]
 
@@ -35,11 +39,14 @@ const DRINK_TYPE_LABELS: Record<string, string> = {
   whisky: "Whisky",
   ron: "Ron",
   vodka: "Vodka",
+  tequila: "Tequila",
+  gin: "Gin",
   champagne: "Champagne",
+  bebida: "Bebida",
   otro: "Otro",
 }
 
-export default function DrinkInventory({ bookingId }: DrinkInventoryProps) {
+export default function DrinkInventory({ bookingId, guestAccessCode }: DrinkInventoryProps) {
   const drinks = useQuery(api.drinkInventory.getByBooking, { bookingId: bookingId as any })
   const summary = useQuery(api.drinkInventory.getSummary, { bookingId: bookingId as any })
 
@@ -49,10 +56,14 @@ export default function DrinkInventory({ bookingId }: DrinkInventoryProps) {
   const markAsReceived = useMutation(api.drinkInventory.markAsReceived)
   const updateExitCount = useMutation(api.drinkInventory.updateExitCount)
   const markAllReceived = useMutation(api.drinkInventory.markAllAsReceived)
+  const generateAccessCode = useMutation(api.guestPortal.generateGuestAccessCode)
 
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [exitDialogOpen, setExitDialogOpen] = useState(false)
   const [selectedDrink, setSelectedDrink] = useState<any>(null)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [currentAccessCode, setCurrentAccessCode] = useState<string | null>(guestAccessCode || null)
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false)
 
   const [newDrink, setNewDrink] = useState({
     drinkType: "vino",
@@ -166,6 +177,46 @@ export default function DrinkInventory({ bookingId }: DrinkInventoryProps) {
 
   const pendingCount = drinks?.filter((d) => d.status === "pending_arrival").length || 0
 
+  const handleShare = async () => {
+    if (currentAccessCode) {
+      setShareDialogOpen(true)
+    } else {
+      // Generar código de acceso
+      setIsGeneratingCode(true)
+      try {
+        const code = await generateAccessCode({ bookingId: bookingId as any })
+        setCurrentAccessCode(code)
+        setShareDialogOpen(true)
+      } catch (error) {
+        toast.error("Error al generar enlace de acceso")
+      } finally {
+        setIsGeneratingCode(false)
+      }
+    }
+  }
+
+  const getShareUrl = () => {
+    if (!currentAccessCode) return ""
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+    return `${baseUrl}/inventario/${currentAccessCode}`
+  }
+
+  const copyToClipboard = async () => {
+    const url = getShareUrl()
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Enlace copiado al portapapeles")
+    } catch (error) {
+      toast.error("Error al copiar enlace")
+    }
+  }
+
+  const shareViaWhatsApp = () => {
+    const url = getShareUrl()
+    const message = encodeURIComponent(`Aqui puedes ver el inventario de tragos de tu evento en Ruka Lefun:\n${url}`)
+    window.open(`https://wa.me/?text=${message}`, "_blank")
+  }
+
   return (
     <div className="py-4 space-y-6">
       {/* Resumen */}
@@ -211,6 +262,16 @@ export default function DrinkInventory({ bookingId }: DrinkInventoryProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShare}
+            disabled={isGeneratingCode}
+            className="text-green-700 border-green-300 hover:bg-green-50"
+          >
+            <Share2 className="w-4 h-4 mr-1" />
+            {isGeneratingCode ? "Generando..." : "Compartir"}
+          </Button>
           {pendingCount > 0 && (
             <Button variant="outline" size="sm" onClick={handleMarkAllReceived}>
               <Check className="w-4 h-4 mr-1" />
@@ -443,6 +504,65 @@ export default function DrinkInventory({ bookingId }: DrinkInventoryProps) {
               disabled={exitData.quantityConsumed + exitData.quantityReturned > (selectedDrink?.quantityIn || 0)}
             >
               Guardar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Compartir */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-green-600" />
+              Compartir Inventario
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600">
+              Comparte este enlace con tu cliente para que pueda ver el inventario de tragos de su evento en tiempo real.
+            </p>
+
+            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+              <Input
+                value={getShareUrl()}
+                readOnly
+                className="flex-1 text-sm bg-transparent border-0 focus-visible:ring-0"
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={copyToClipboard}
+                className="shrink-0"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={copyToClipboard}
+                className="flex-1"
+                variant="outline"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copiar Enlace
+              </Button>
+              <Button
+                onClick={shareViaWhatsApp}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                Enviar por WhatsApp
+              </Button>
+            </div>
+
+            <Button
+              variant="ghost"
+              className="w-full text-gray-600"
+              onClick={() => window.open(getShareUrl(), "_blank")}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Ver como cliente
             </Button>
           </div>
         </DialogContent>

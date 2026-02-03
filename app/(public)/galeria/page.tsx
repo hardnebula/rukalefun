@@ -21,7 +21,7 @@ export default function GaleriaPage() {
 
   const categories = [
     { id: "all", label: "Todos" },
-    { id: "boda", label: "Bodas" },
+    { id: "boda", label: "Matrimonios" },
     { id: "corporativo", label: "Corporativos" },
     { id: "cumpleanos", label: "Cumpleaños" },
     { id: "espacio", label: "Instalaciones" },
@@ -145,7 +145,7 @@ export default function GaleriaPage() {
                     "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=800"
                   ];
                   const titles = [
-                    "Boda al aire libre",
+                    "Matrimonio al aire libre",
                     "Evento corporativo",
                     "Celebración en la naturaleza",
                     "Conferencia y seminarios",

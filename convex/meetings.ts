@@ -44,6 +44,14 @@ export const getMeetingInternal = internalQuery({
   },
 });
 
+// Query pública para obtener reunión por ID (usada por actions externas)
+export const getMeetingById = query({
+  args: { id: v.id("meetings") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
 // Obtener reuniones por booking
 export const getMeetingsByBooking = query({
   args: { bookingId: v.id("bookings") },
