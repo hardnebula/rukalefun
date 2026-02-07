@@ -1,47 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useQuery } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { getAdminSession } from "@/lib/auth"
+import { authClient } from "@/lib/auth-client"
 import { Loader2 } from "lucide-react"
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [isChecking, setIsChecking] = useState(true)
-  const sessionId = getAdminSession()
-  
-  const session = useQuery(
-    api.auth.verifySession,
-    sessionId ? { sessionId: sessionId as any } : "skip"
-  )
+  const { data: session, isPending } = authClient.useSession()
 
   useEffect(() => {
-    if (!sessionId) {
-      // No hay sesión, redirigir a login
+    if (!isPending && !session) {
       router.push("/admin/login")
-      return
     }
+  }, [isPending, session, router])
 
-    if (session === undefined) {
-      // Todavía cargando
-      return
-    }
-
-    if (session === null) {
-      // Sesión inválida o expirada
-      localStorage.removeItem("adminSession")
-      localStorage.removeItem("adminName")
-      router.push("/admin/login")
-      return
-    }
-
-    // Sesión válida
-    setIsChecking(false)
-  }, [sessionId, session, router])
-
-  if (isChecking || !session) {
+  if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -52,6 +26,9 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     )
   }
 
+  if (!session) {
+    return null
+  }
+
   return <>{children}</>
 }
-

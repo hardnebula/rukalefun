@@ -21,9 +21,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
-import { useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { getAdminSession, getAdminName, clearAdminSession } from "@/lib/auth"
+import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
@@ -39,29 +37,25 @@ const menuItems = [
   { title: "Listas de Compras", href: "/admin/listas-compras", icon: ShoppingCart },
   { title: "Historial", href: "/admin/historial", icon: History },
   { title: "Invitaciones", href: "/admin/invitaciones", icon: Heart },
-  { title: "Configuración", href: "/admin/configuracion", icon: Settings },
+  { title: "Configuracion", href: "/admin/configuracion", icon: Settings },
 ]
 
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const logout = useMutation(api.auth.logout)
-  const adminName = getAdminName()
+  const { data: session } = authClient.useSession()
+  const adminName = session?.user?.name
 
   const handleLogout = async () => {
-    const sessionId = getAdminSession()
-    if (sessionId) {
-      try {
-        await logout({ sessionId: sessionId as any })
-      } catch (error) {
-        console.error("Error al cerrar sesión:", error)
-      }
+    try {
+      await authClient.signOut()
+      toast.success("Sesion cerrada correctamente")
+      router.push("/admin/login")
+    } catch (error) {
+      console.error("Error al cerrar sesion:", error)
+      toast.error("Error al cerrar sesion")
     }
-    
-    clearAdminSession()
-    toast.success("Sesión cerrada correctamente")
-    router.push("/admin/login")
   }
 
   return (
@@ -80,7 +74,7 @@ export default function AdminSidebar() {
             <div className="relative h-10 w-10 flex-shrink-0">
               <Image
                 src="/Logo.rukalefun.jpg"
-                alt="Logo Ruka Lefún"
+                alt="Logo Ruka Lefun"
                 fill
                 className="object-contain rounded-full"
               />
@@ -92,7 +86,7 @@ export default function AdminSidebar() {
             <div className="relative h-8 w-8">
               <Image
                 src="/Logo.rukalefun.jpg"
-                alt="Logo Ruka Lefún"
+                alt="Logo Ruka Lefun"
                 fill
                 className="object-contain rounded-full"
               />
@@ -152,8 +146,8 @@ export default function AdminSidebar() {
                 <p className="font-medium truncate">👤 {adminName}</p>
               </div>
             )}
-            
-            {/* Botón de logout */}
+
+            {/* Boton de logout */}
             <Button
               onClick={handleLogout}
               variant="outline"
@@ -161,26 +155,26 @@ export default function AdminSidebar() {
               size="sm"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
+              Cerrar Sesion
             </Button>
 
-            {/* Link al sitio público */}
+            {/* Link al sitio publico */}
             <div className="text-xs text-gray-500 text-center">
               <Link
                 href="/"
                 className="text-nature-moss hover:text-nature-forest transition-colors"
               >
-                ← Volver al sitio público
+                ← Volver al sitio publico
               </Link>
             </div>
           </>
         )}
-        
+
         {isCollapsed && (
           <button
             onClick={handleLogout}
             className="w-full p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
-            title="Cerrar sesión"
+            title="Cerrar sesion"
           >
             <LogOut className="h-5 w-5 mx-auto" />
           </button>
@@ -190,4 +184,3 @@ export default function AdminSidebar() {
     </>
   )
 }
-
