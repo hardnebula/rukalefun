@@ -22,7 +22,7 @@ export default function Navbar() {
   const navLinks = [
     { href: "/", label: "Inicio", icon: Home },
     { href: "/espacios", label: "Espacios", icon: Home },
-    { href: "/galeria", label: "Galeria", icon: ImageIcon },
+    // { href: "/galeria", label: "Galeria", icon: ImageIcon },
     { href: "/reservas", label: "Cotizaciones", icon: Calendar },
     { href: "/invitaciones", label: "Invitaciones", icon: Heart },
     { href: "/contacto", label: "Contacto", icon: Mail },
@@ -31,14 +31,14 @@ export default function Navbar() {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed z-50 transition-all duration-300",
         isScrolled
-          ? "bg-white shadow-md"
-          : "bg-gradient-to-b from-black/50 to-transparent"
+          ? "top-0 left-0 right-0 bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
+          : "top-4 left-4 right-4 bg-black/20 backdrop-blur-sm rounded-2xl border border-white/10"
       )}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             <div className="relative h-12 w-12 flex-shrink-0">
@@ -83,8 +83,9 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 cursor-pointer rounded-lg hover:bg-white/10 transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
           >
             {isMobileMenuOpen ? (
               <X className={cn("h-6 w-6", isScrolled ? "text-gray-700" : "text-white")} />

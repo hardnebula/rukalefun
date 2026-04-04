@@ -1,19 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Plus,
-  Save,
   Calendar,
   Clock,
   MapPin,
@@ -29,6 +25,7 @@ import {
   Music,
   Camera,
   MoreHorizontal,
+  Send,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Toaster } from "@/components/ui/sonner"
@@ -39,36 +36,43 @@ const ROLE_CONFIG = {
   admin: {
     label: "Administrador",
     color: "bg-purple-100 text-purple-800 border-purple-300",
+    bubbleBg: "bg-purple-50 border-purple-200",
     icon: User,
   },
   decoradora: {
     label: "Decoradora",
     color: "bg-pink-100 text-pink-800 border-pink-300",
+    bubbleBg: "bg-pink-50 border-pink-200",
     icon: Palette,
   },
   cocina: {
     label: "Cocina",
     color: "bg-orange-100 text-orange-800 border-orange-300",
+    bubbleBg: "bg-orange-50 border-orange-200",
     icon: ChefHat,
   },
   dj: {
     label: "DJ",
     color: "bg-blue-100 text-blue-800 border-blue-300",
+    bubbleBg: "bg-blue-50 border-blue-200",
     icon: Music,
   },
   fotografia: {
     label: "Fotografía",
     color: "bg-cyan-100 text-cyan-800 border-cyan-300",
+    bubbleBg: "bg-cyan-50 border-cyan-200",
     icon: Camera,
   },
   novios: {
     label: "Novios",
-    color: "bg-red-100 text-red-800 border-red-300",
+    color: "bg-rose-100 text-rose-800 border-rose-300",
+    bubbleBg: "bg-rose-50 border-rose-200",
     icon: Heart,
   },
   otro: {
     label: "Otro",
     color: "bg-gray-100 text-gray-800 border-gray-300",
+    bubbleBg: "bg-gray-50 border-gray-200",
     icon: MoreHorizontal,
   },
 } as const
@@ -94,37 +98,83 @@ export default function ReunionPublicaPage() {
   const meetingData = useQuery(api.meetingNotes.getMeetingByAccessCode, { accessCode })
   const addNote = useMutation(api.meetingNotes.addNoteFromPublic)
 
-  const [showForm, setShowForm] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    authorName: "",
-    content: "",
-    category: "",
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  const [sending, setSending] = useState(false)
+  const [changingName, setChangingName] = useState(false)
+  const [content, setContent] = useState("")
+  const [authorName, setAuthorName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("meetingNotes_publicAuthorName") || ""
+    }
+    return ""
   })
 
+  // Persist authorName
+  useEffect(() => {
+    if (typeof window !== "undefined" && authorName) {
+      localStorage.setItem("meetingNotes_publicAuthorName", authorName)
+    }
+  }, [authorName])
+
+  // Auto-scroll when notes change
+  useEffect(() => {
+    if (scrollRef.current && meetingData?.notes) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [meetingData?.notes])
+
   const handleAddNote = async () => {
-    if (!formData.authorName.trim() || !formData.content.trim()) {
-      toast.error("Por favor completa tu nombre y el contenido de la nota")
+    if (!authorName.trim()) {
+      setChangingName(true)
+      toast.error("Por favor ingresa tu nombre")
       return
     }
+    if (!content.trim()) return
 
-    setSaving(true)
+    setSending(true)
     try {
       await addNote({
         accessCode,
-        authorName: formData.authorName,
-        content: formData.content,
-        category: formData.category || undefined,
+        authorName: authorName.trim(),
+        content: content.trim(),
       })
-      toast.success("Nota agregada exitosamente")
-      setFormData({ ...formData, content: "", category: "" })
-      setShowForm(false)
+      setContent("")
+      inputRef.current?.focus()
     } catch (error: any) {
       toast.error(error.message || "Error al agregar nota")
       console.error(error)
     } finally {
-      setSaving(false)
+      setSending(false)
     }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleAddNote()
+    }
+  }
+
+  // Helper: format date for separators
+  const formatDateSeparator = (timestamp: number) => {
+    const date = new Date(timestamp)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    if (date.toDateString() === today.toDateString()) return "Hoy"
+    if (date.toDateString() === yesterday.toDateString()) return "Ayer"
+    return date.toLocaleDateString("es-CL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    })
+  }
+
+  const isDifferentDay = (ts1: number, ts2: number) => {
+    return new Date(ts1).toDateString() !== new Date(ts2).toDateString()
   }
 
   // Loading state
@@ -166,17 +216,8 @@ export default function ReunionPublicaPage() {
   // Define note type
   type Note = (typeof notes)[number]
 
-  // Group notes by role
-  const groupedNotes = notes.reduce<Record<Role, Note[]>>(
-    (acc: Record<Role, Note[]>, note: Note) => {
-      if (!acc[note.role as Role]) {
-        acc[note.role as Role] = []
-      }
-      acc[note.role as Role].push(note)
-      return acc
-    },
-    {} as Record<Role, Note[]>
-  )
+  // Sort notes chronologically (oldest first)
+  const sortedNotes = [...notes].sort((a: Note, b: Note) => a.createdAt - b.createdAt)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white">
@@ -295,141 +336,147 @@ export default function ReunionPublicaPage() {
           </Card>
         )}
 
-        {/* Notes Section */}
+        {/* Notes Section - Chat Style */}
         <Card className="border-rose-200">
           <CardHeader className="bg-gradient-to-r from-rose-50 to-pink-50 border-b border-rose-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-rose-600" />
-                <CardTitle className="text-rose-900">Notas Colaborativas</CardTitle>
-              </div>
-              <Button
-                onClick={() => setShowForm(!showForm)}
-                className="bg-rose-600 hover:bg-rose-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nota
-              </Button>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-rose-600" />
+              <CardTitle className="text-rose-900">Notas Colaborativas</CardTitle>
             </div>
             <CardDescription>
               Todos los participantes pueden agregar notas y comentarios
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            {/* Add Note Form */}
-            {showForm && (
-              <div className="p-4 bg-rose-50 rounded-lg border border-rose-200 space-y-4">
-                <h4 className="font-semibold text-rose-900">Nueva Nota</h4>
-
-                <div>
-                  <Label>Tu Nombre *</Label>
-                  <Input
-                    value={formData.authorName}
-                    onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
-                    placeholder="Ej: María y Juan"
-                  />
+          <CardContent className="flex flex-col p-0" style={{ height: "450px" }}>
+            {/* Scrollable message area */}
+            <div
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto p-4 space-y-1"
+            >
+              {sortedNotes.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay notas todavía.</p>
+                  <p className="text-sm">Escribe un mensaje abajo para comenzar.</p>
                 </div>
-
-                <div>
-                  <Label>Categoría (opcional)</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Sin categoría</SelectItem>
-                      {NOTE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Tu Nota *</Label>
-                  <Textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder="Escribe aquí tu nota, pregunta o comentario..."
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowForm(false)}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleAddNote}
-                    disabled={saving}
-                    className="bg-rose-600 hover:bg-rose-700"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Guardar Nota
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Notes List */}
-            {notes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No hay notas todavía.</p>
-                <p className="text-sm">Sé el primero en agregar una nota.</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedNotes).map(([role, roleNotes]) => {
-                  const config = ROLE_CONFIG[role as Role]
+              ) : (
+                sortedNotes.map((note: Note, index: number) => {
+                  const config = ROLE_CONFIG[note.role as Role] || ROLE_CONFIG.otro
                   const Icon = config.icon
-                  const notesArray = roleNotes as Note[]
+                  const showDateSeparator =
+                    index === 0 || isDifferentDay(sortedNotes[index - 1].createdAt, note.createdAt)
 
                   return (
-                    <div key={role} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-5 h-5" />
-                        <h4 className="font-semibold">{config.label}</h4>
-                        <Badge variant="outline" className={config.color}>
-                          {notesArray?.length || 0}
-                        </Badge>
-                      </div>
-
-                      {notesArray?.map((note: Note) => (
-                        <div
-                          key={note._id}
-                          className={`p-4 rounded-lg border ${config.color}`}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium">{note.authorName}</span>
-                            {note.category && (
-                              <Badge variant="secondary" className="text-xs">
-                                {NOTE_CATEGORIES.find((c) => c.value === note.category)?.label ||
-                                  note.category}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm whitespace-pre-wrap">{note.content}</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(note.createdAt).toLocaleString("es-CL")}
-                            {note.updatedAt !== note.createdAt && " (editada)"}
-                          </p>
+                    <div key={note._id}>
+                      {/* Date separator */}
+                      {showDateSeparator && (
+                        <div className="flex items-center gap-3 my-3">
+                          <div className="flex-1 h-px bg-rose-200" />
+                          <span className="text-xs text-rose-400 font-medium px-2">
+                            {formatDateSeparator(note.createdAt)}
+                          </span>
+                          <div className="flex-1 h-px bg-rose-200" />
                         </div>
-                      ))}
+                      )}
+
+                      {/* Note bubble */}
+                      <div className={`p-3 rounded-lg border ${config.bubbleBg} my-1`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className={`text-xs ${config.color}`}>
+                            <Icon className="w-3 h-3 mr-1" />
+                            {config.label}
+                          </Badge>
+                          <span className="font-medium text-sm">{note.authorName}</span>
+                          {note.category && (
+                            <Badge variant="secondary" className="text-xs">
+                              {NOTE_CATEGORIES.find((c) => c.value === note.category)?.label ||
+                                note.category}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-gray-400">
+                            {new Date(note.createdAt).toLocaleTimeString("es-CL", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {note.updatedAt !== note.createdAt && " (editada)"}
+                          </span>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap mt-1">{note.content}</p>
+                      </div>
                     </div>
                   )
-                })}
+                })
+              )}
+            </div>
+
+            {/* Input bar - fixed at bottom */}
+            <div className="border-t border-rose-100 p-3 bg-rose-50/50">
+              {/* Author name prompt */}
+              {(!authorName || changingName) && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Input
+                    value={authorName}
+                    onChange={(e) => setAuthorName(e.target.value)}
+                    placeholder="Tu nombre (ej: María y Juan)"
+                    className="flex-1 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && authorName.trim()) {
+                        setChangingName(false)
+                        inputRef.current?.focus()
+                      }
+                    }}
+                    autoFocus={changingName}
+                  />
+                  {changingName && authorName.trim() && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setChangingName(false)}
+                    >
+                      OK
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-end gap-2">
+                <Textarea
+                  ref={inputRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Escribe una nota o comentario..."
+                  disabled={sending}
+                  className="flex-1 resize-none min-h-[40px] max-h-[120px]"
+                  rows={1}
+                />
+                <Button
+                  onClick={handleAddNote}
+                  disabled={!content.trim() || sending}
+                  className="bg-rose-600 hover:bg-rose-700 shrink-0"
+                  size="icon"
+                >
+                  {sending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
-            )}
+
+              {/* Author info line */}
+              {authorName && !changingName && (
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Enviando como: <strong>{authorName}</strong>{" "}
+                  <button
+                    className="text-rose-600 hover:underline"
+                    onClick={() => setChangingName(true)}
+                  >
+                    (cambiar)
+                  </button>
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </main>

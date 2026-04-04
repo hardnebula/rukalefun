@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Plus,
   Trash2,
   Edit,
   Save,
@@ -28,6 +27,7 @@ import {
   Camera,
   Heart,
   MoreHorizontal,
+  Send,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -36,36 +36,43 @@ const ROLE_CONFIG = {
   admin: {
     label: "Administrador",
     color: "bg-purple-100 text-purple-800 border-purple-300",
+    bubbleBg: "bg-purple-50 border-purple-200",
     icon: User,
   },
   decoradora: {
     label: "Decoradora",
     color: "bg-pink-100 text-pink-800 border-pink-300",
+    bubbleBg: "bg-pink-50 border-pink-200",
     icon: Palette,
   },
   cocina: {
     label: "Cocina",
     color: "bg-orange-100 text-orange-800 border-orange-300",
+    bubbleBg: "bg-orange-50 border-orange-200",
     icon: ChefHat,
   },
   dj: {
     label: "DJ",
     color: "bg-blue-100 text-blue-800 border-blue-300",
+    bubbleBg: "bg-blue-50 border-blue-200",
     icon: Music,
   },
   fotografia: {
     label: "Fotografía",
     color: "bg-cyan-100 text-cyan-800 border-cyan-300",
+    bubbleBg: "bg-cyan-50 border-cyan-200",
     icon: Camera,
   },
   novios: {
     label: "Novios",
     color: "bg-red-100 text-red-800 border-red-300",
+    bubbleBg: "bg-red-50 border-red-200",
     icon: Heart,
   },
   otro: {
     label: "Otro",
     color: "bg-gray-100 text-gray-800 border-gray-300",
+    bubbleBg: "bg-gray-50 border-gray-200",
     icon: MoreHorizontal,
   },
 } as const
@@ -98,46 +105,87 @@ export default function MeetingNotes({ meetingId, accessCode }: MeetingNotesProp
   const revokeAccessCode = useMutation(api.meetingNotes.revokeAccessCode)
   const generateSummary = useAction(api.meetingNotes.generateMeetingSummary)
 
-  const [showForm, setShowForm] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
   const [editingNote, setEditingNote] = useState<string | null>(null)
   const [filterRole, setFilterRole] = useState<string>("all")
   const [generatingCode, setGeneratingCode] = useState(false)
   const [generatingSummary, setGeneratingSummary] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [changingName, setChangingName] = useState(false)
 
-  // Form state
-  const [formData, setFormData] = useState({
-    role: "admin" as Role,
-    authorName: "",
-    content: "",
-    category: "",
+  // Input state - persisted via localStorage
+  const [role, setRole] = useState<Role>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("meetingNotes_adminRole") as Role) || "admin"
+    }
+    return "admin"
   })
+  const [authorName, setAuthorName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("meetingNotes_adminAuthorName") || ""
+    }
+    return ""
+  })
+  const [content, setContent] = useState("")
 
   // Edit form state
   const [editData, setEditData] = useState({
     content: "",
-    category: "",
+    category: "sin_categoria",
   })
 
-  const handleAddNote = async () => {
-    if (!formData.authorName.trim() || !formData.content.trim()) {
-      toast.error("Por favor completa nombre y contenido")
+  // Persist role and authorName
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("meetingNotes_adminRole", role)
+    }
+  }, [role])
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && authorName) {
+      localStorage.setItem("meetingNotes_adminAuthorName", authorName)
+    }
+  }, [authorName])
+
+  // Auto-scroll to bottom when notes change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [notes])
+
+  const handleAddNote = useCallback(async () => {
+    if (!authorName.trim()) {
+      setChangingName(true)
+      toast.error("Por favor ingresa tu nombre")
       return
     }
+    if (!content.trim()) return
 
+    setSending(true)
     try {
       await addNote({
         meetingId,
-        role: formData.role,
-        authorName: formData.authorName,
-        content: formData.content,
-        category: formData.category || undefined,
+        role,
+        authorName: authorName.trim(),
+        content: content.trim(),
       })
-      toast.success("Nota agregada")
-      setFormData({ ...formData, content: "", category: "" })
-      setShowForm(false)
+      setContent("")
+      inputRef.current?.focus()
     } catch (error) {
       toast.error("Error al agregar nota")
       console.error(error)
+    } finally {
+      setSending(false)
+    }
+  }, [addNote, meetingId, role, authorName, content])
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleAddNote()
     }
   }
 
@@ -146,7 +194,7 @@ export default function MeetingNotes({ meetingId, accessCode }: MeetingNotesProp
       await updateNote({
         noteId,
         content: editData.content,
-        category: editData.category || undefined,
+        category: (editData.category && editData.category !== "sin_categoria") ? editData.category : undefined,
       })
       toast.success("Nota actualizada")
       setEditingNote(null)
@@ -229,26 +277,38 @@ export default function MeetingNotes({ meetingId, accessCode }: MeetingNotesProp
   // Define note type
   type Note = NonNullable<typeof notes>[number]
 
-  // Filter notes by role
-  const filteredNotes = notes?.filter((note: Note) => {
-    if (filterRole === "all") return true
-    return note.role === filterRole
-  })
+  // Sort notes chronologically (oldest first) and filter
+  const sortedNotes = notes
+    ? [...notes]
+        .filter((note: Note) => filterRole === "all" || note.role === filterRole)
+        .sort((a: Note, b: Note) => a.createdAt - b.createdAt)
+    : null
 
-  // Group notes by role for display
-  const groupedNotes = filteredNotes?.reduce<Record<Role, Note[]>>(
-    (acc: Record<Role, Note[]>, note: Note) => {
-      if (!acc[note.role as Role]) {
-        acc[note.role as Role] = []
-      }
-      acc[note.role as Role].push(note)
-      return acc
-    },
-    {} as Record<Role, Note[]>
-  )
+  // Helper: format date for separators
+  const formatDateSeparator = (timestamp: number) => {
+    const date = new Date(timestamp)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    if (date.toDateString() === today.toDateString()) return "Hoy"
+    if (date.toDateString() === yesterday.toDateString()) return "Ayer"
+    return date.toLocaleDateString("es-CL", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    })
+  }
+
+  // Helper: check if two timestamps are on different dates
+  const isDifferentDay = (ts1: number, ts2: number) => {
+    const d1 = new Date(ts1)
+    const d2 = new Date(ts2)
+    return d1.toDateString() !== d2.toDateString()
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header con código de acceso */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 rounded-lg border">
         <div>
@@ -291,7 +351,7 @@ export default function MeetingNotes({ meetingId, accessCode }: MeetingNotesProp
         </div>
       </div>
 
-      {/* Botón IA y filtros */}
+      {/* Toolbar: Filtro + Resumen IA */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-2">
           <Label className="text-sm">Filtrar por rol:</Label>
@@ -310,217 +370,245 @@ export default function MeetingNotes({ meetingId, accessCode }: MeetingNotesProp
           </Select>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={handleGenerateSummary}
-            disabled={generatingSummary || !notes || notes.length === 0}
-            variant="outline"
-            className="border-purple-300 text-purple-700 hover:bg-purple-50"
-          >
-            {generatingSummary ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 mr-2" />
-            )}
-            Generar Resumen IA
-          </Button>
-          <Button onClick={() => setShowForm(!showForm)} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva Nota
-          </Button>
-        </div>
+        <Button
+          onClick={handleGenerateSummary}
+          disabled={generatingSummary || !notes || notes.length === 0}
+          variant="outline"
+          className="border-purple-300 text-purple-700 hover:bg-purple-50"
+        >
+          {generatingSummary ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-2" />
+          )}
+          Generar Resumen IA
+        </Button>
       </div>
 
-      {/* Formulario de nueva nota */}
-      {showForm && (
-        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label>Rol *</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value: Role) => setFormData({ ...formData, role: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ROLE_CONFIG).map(([key, config]) => (
-                    <SelectItem key={key} value={key}>
-                      {config.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* Chat thread container */}
+      <div className="border rounded-lg flex flex-col bg-white">
+        {/* Scrollable message area */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-4 space-y-1 max-h-[500px] min-h-[200px]"
+        >
+          {!sortedNotes ? (
+            <div className="text-center py-8 text-gray-500">Cargando notas...</div>
+          ) : sortedNotes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              {notes && notes.length > 0
+                ? "No hay notas con este filtro."
+                : "No hay notas todavía. Escribe un mensaje abajo para comenzar."}
             </div>
-            <div>
-              <Label>Tu Nombre *</Label>
+          ) : (
+            sortedNotes.map((note: Note, index: number) => {
+              const config = ROLE_CONFIG[note.role as Role] || ROLE_CONFIG.otro
+              const Icon = config.icon
+              const showDateSeparator =
+                index === 0 || isDifferentDay(sortedNotes[index - 1].createdAt, note.createdAt)
+
+              return (
+                <div key={note._id}>
+                  {/* Date separator */}
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-3">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs text-gray-500 font-medium px-2">
+                        {formatDateSeparator(note.createdAt)}
+                      </span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                  )}
+
+                  {/* Note bubble */}
+                  {editingNote === note._id ? (
+                    // Inline edit mode
+                    <div className={`p-3 rounded-lg border ${config.bubbleBg} my-2 space-y-2`}>
+                      <Select
+                        value={editData.category}
+                        onValueChange={(value) => setEditData({ ...editData, category: value })}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sin_categoria">Sin categoría</SelectItem>
+                          {NOTE_CATEGORIES.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Textarea
+                        value={editData.content}
+                        onChange={(e) => setEditData({ ...editData, content: e.target.value })}
+                        rows={3}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setEditingNote(null)}>
+                          <X className="w-3 h-3 mr-1" />
+                          Cancelar
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdateNote(note._id)}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Save className="w-3 h-3 mr-1" />
+                          Guardar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    // Normal bubble
+                    <div className={`group p-3 rounded-lg border ${config.bubbleBg} my-1 relative`}>
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className={`text-xs ${config.color}`}>
+                              <Icon className="w-3 h-3 mr-1" />
+                              {config.label}
+                            </Badge>
+                            <span className="font-medium text-sm">{note.authorName}</span>
+                            {note.category && (
+                              <Badge variant="secondary" className="text-xs">
+                                {NOTE_CATEGORIES.find((c) => c.value === note.category)?.label ||
+                                  note.category}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-gray-400">
+                              {new Date(note.createdAt).toLocaleTimeString("es-CL", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                              {note.updatedAt !== note.createdAt && " (editada)"}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap mt-1">{note.content}</p>
+                        </div>
+
+                        {/* Hover actions */}
+                        <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => {
+                              setEditingNote(note._id)
+                              setEditData({
+                                content: note.content,
+                                category: note.category || "sin_categoria",
+                              })
+                            }}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteNote(note._id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Input bar - always visible */}
+        <div className="border-t p-3 bg-gray-50 rounded-b-lg">
+          {/* Author name prompt */}
+          {(!authorName || changingName) && (
+            <div className="flex items-center gap-2 mb-2">
               <Input
-                value={formData.authorName}
-                onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
-                placeholder="Ej: María García"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                placeholder="Tu nombre (ej: María García)"
+                className="flex-1 text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && authorName.trim()) {
+                    setChangingName(false)
+                    inputRef.current?.focus()
+                  }
+                }}
+                autoFocus={changingName}
               />
+              {changingName && authorName.trim() && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setChangingName(false)}
+                >
+                  OK
+                </Button>
+              )}
             </div>
-          </div>
-          <div>
-            <Label>Categoría (opcional)</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar categoría" />
+          )}
+
+          <div className="flex items-end gap-2">
+            {/* Role selector */}
+            <Select value={role} onValueChange={(v: Role) => setRole(v)}>
+              <SelectTrigger className="w-[140px] shrink-0">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sin categoría</SelectItem>
-                {NOTE_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
+                {Object.entries(ROLE_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {config.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label>Nota *</Label>
+
+            {/* Message textarea */}
             <Textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Escribe tu nota aquí..."
-              rows={3}
+              ref={inputRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Escribe una nota..."
+              disabled={sending}
+              className="flex-1 resize-none min-h-[40px] max-h-[120px]"
+              rows={1}
             />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowForm(false)}>
-              Cancelar
+
+            {/* Send button */}
+            <Button
+              onClick={handleAddNote}
+              disabled={!content.trim() || sending}
+              className="bg-purple-600 hover:bg-purple-700 shrink-0"
+              size="icon"
+            >
+              {sending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
             </Button>
-            <Button onClick={handleAddNote} className="bg-purple-600 hover:bg-purple-700">
-              <Save className="w-4 h-4 mr-2" />
-              Guardar Nota
-            </Button>
           </div>
-        </div>
-      )}
 
-      {/* Lista de notas */}
-      {!notes ? (
-        <div className="text-center py-8 text-gray-500">Cargando notas...</div>
-      ) : notes.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          No hay notas todavía. Haz clic en &quot;Nueva Nota&quot; para agregar una.
+          {/* Author info line */}
+          {authorName && !changingName && (
+            <p className="text-xs text-gray-500 mt-1.5">
+              Enviando como: <strong>{authorName}</strong>{" "}
+              <button
+                className="text-purple-600 hover:underline"
+                onClick={() => setChangingName(true)}
+              >
+                (cambiar)
+              </button>
+            </p>
+          )}
         </div>
-      ) : (
-        <div className="space-y-4">
-          {Object.entries(groupedNotes || {}).map(([role, roleNotes]) => {
-            const config = ROLE_CONFIG[role as Role]
-            const Icon = config.icon
-            const notesArray = roleNotes as Note[]
-
-            return (
-              <div key={role} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Icon className="w-5 h-5" />
-                  <h4 className="font-semibold">{config.label}</h4>
-                  <Badge variant="outline" className={config.color}>
-                    {notesArray?.length || 0} notas
-                  </Badge>
-                </div>
-
-                {notesArray?.map((note: Note) => (
-                  <div
-                    key={note._id}
-                    className={`p-4 rounded-lg border ${config.color} bg-opacity-50`}
-                  >
-                    {editingNote === note._id ? (
-                      <div className="space-y-3">
-                        <Select
-                          value={editData.category}
-                          onValueChange={(value) => setEditData({ ...editData, category: value })}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Categoría" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">Sin categoría</SelectItem>
-                            {NOTE_CATEGORIES.map((cat) => (
-                              <SelectItem key={cat.value} value={cat.value}>
-                                {cat.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Textarea
-                          value={editData.content}
-                          onChange={(e) => setEditData({ ...editData, content: e.target.value })}
-                          rows={3}
-                        />
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditingNote(null)}>
-                            <X className="w-4 h-4 mr-1" />
-                            Cancelar
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleUpdateNote(note._id)}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Save className="w-4 h-4 mr-1" />
-                            Guardar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium">{note.authorName}</span>
-                              {note.category && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {NOTE_CATEGORIES.find((c) => c.value === note.category)?.label ||
-                                    note.category}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm whitespace-pre-wrap">{note.content}</p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {new Date(note.createdAt).toLocaleString("es-CL")}
-                              {note.updatedAt !== note.createdAt && " (editada)"}
-                            </p>
-                          </div>
-                          <div className="flex gap-1 ml-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingNote(note._id)
-                                setEditData({
-                                  content: note.content,
-                                  category: note.category || "",
-                                })
-                              }}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleDeleteNote(note._id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )
-          })}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

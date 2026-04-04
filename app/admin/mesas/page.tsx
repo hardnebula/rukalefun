@@ -19,10 +19,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Users,
-  Plus,
   Trash2,
   UserPlus,
-  UserMinus,
   CheckCircle2,
   XCircle,
   Edit2,
@@ -58,6 +56,7 @@ export default function MesasPage() {
   const [isImportRsvpOpen, setIsImportRsvpOpen] = useState(false)
   const [selectedTable, setSelectedTable] = useState<any>(null)
   const [editingGuest, setEditingGuest] = useState<any>(null)
+  const [quickAddInputs, setQuickAddInputs] = useState<Record<string, string>>({})
   const [editingTableTitle, setEditingTableTitle] = useState<string | null>(null)
   const [tableTitleValue, setTableTitleValue] = useState("")
 
@@ -99,26 +98,31 @@ export default function MesasPage() {
     })
   }
 
+  const handleQuickAdd = async (table: any, guestName: string) => {
+    if (!guestName.trim() || !selectedBooking) return
+
+    try {
+      await assignGuest({
+        bookingId: selectedBooking as any,
+        tableId: table._id,
+        guestName: guestName.trim(),
+        isConfirmed: false,
+      })
+      setQuickAddInputs((prev) => ({ ...prev, [table._id]: "" }))
+      toast.success("Invitado agregado")
+    } catch (error: any) {
+      toast.error(error.message || "Error al agregar invitado")
+    }
+  }
+
   const openAddGuest = (table: any) => {
     setSelectedTable(table)
     resetGuestForm()
     setIsAddGuestOpen(true)
   }
 
-  const openEditGuest = (guest: any) => {
-    setEditingGuest(guest)
-    setGuestFormData({
-      guestName: guest.guestName,
-      dietaryRestrictions: guest.dietaryRestrictions || "",
-      isConfirmed: guest.isConfirmed,
-      notes: guest.notes || ""
-    })
-    setIsEditGuestOpen(true)
-  }
-
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!selectedTable || !selectedBooking) return
 
     try {
@@ -136,6 +140,17 @@ export default function MesasPage() {
     } catch (error: any) {
       toast.error(error.message || "Error al agregar invitado")
     }
+  }
+
+  const openEditGuest = (guest: any) => {
+    setEditingGuest(guest)
+    setGuestFormData({
+      guestName: guest.guestName,
+      dietaryRestrictions: guest.dietaryRestrictions || "",
+      isConfirmed: guest.isConfirmed,
+      notes: guest.notes || ""
+    })
+    setIsEditGuestOpen(true)
   }
 
   const handleEditGuest = async (e: React.FormEvent) => {
@@ -506,17 +521,39 @@ export default function MesasPage() {
                   ))}
                 </div>
 
-                {/* Botón agregar invitado */}
-                <Button
-                  onClick={() => openAddGuest(table)}
-                  disabled={occupiedSeats >= table.capacity}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  {occupiedSeats >= table.capacity ? "Mesa Llena" : "Agregar"}
-                </Button>
+                {/* Quick-add invitado */}
+                {occupiedSeats >= table.capacity ? (
+                  <p className="text-xs text-center text-red-500 font-medium py-1">Mesa Llena</p>
+                ) : (
+                  <div className="flex gap-1">
+                    <Input
+                      value={quickAddInputs[table._id] || ""}
+                      onChange={(e) =>
+                        setQuickAddInputs((prev) => ({ ...prev, [table._id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleQuickAdd(table, quickAddInputs[table._id] || "")
+                        }
+                        if (e.key === "Escape") {
+                          setQuickAddInputs((prev) => ({ ...prev, [table._id]: "" }))
+                        }
+                      }}
+                      placeholder="Nombre y Enter..."
+                      className="h-8 text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 flex-shrink-0"
+                      onClick={() => openAddGuest(table)}
+                      title="Agregar con detalles"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -535,12 +572,12 @@ export default function MesasPage() {
         </Card>
       )}
 
-      {/* Dialog: Agregar Invitado */}
+      {/* Dialog: Agregar Invitado con Detalles */}
       <Dialog open={isAddGuestOpen} onOpenChange={setIsAddGuestOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Agregar Invitado - Mesa {selectedTable?.tableNumber}
+              Agregar Invitado - {selectedTable?.title || `Mesa ${selectedTable?.tableNumber}`}
             </DialogTitle>
           </DialogHeader>
 

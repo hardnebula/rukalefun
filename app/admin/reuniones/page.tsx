@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,6 +23,16 @@ export default function ReunionesPage() {
   const createMeeting = useMutation(api.meetings.createMeeting)
   const updateMeeting = useMutation(api.meetings.updateMeeting)
   const deleteMeeting = useMutation(api.meetings.deleteMeeting)
+
+  // Keep selectedMeeting in sync with live query data
+  useEffect(() => {
+    if (selectedMeeting && meetings) {
+      const updated = meetings.find((m: any) => m._id === selectedMeeting._id)
+      if (updated) {
+        setSelectedMeeting(updated)
+      }
+    }
+  }, [meetings])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
@@ -584,11 +594,29 @@ export default function ReunionesPage() {
                         </span>
                       )}
                     </div>
-                    <div className="p-3 bg-white rounded border">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {selectedMeeting.aiGeneratedSummary}
-                      </p>
-                    </div>
+                    <div className="p-3 bg-white rounded border prose prose-sm max-w-none text-gray-700
+                      [&_h1]:text-lg [&_h1]:font-bold [&_h1]:text-purple-900 [&_h1]:mb-3 [&_h1]:mt-4 [&_h1]:first:mt-0
+                      [&_h2]:text-base [&_h2]:font-bold [&_h2]:text-purple-800 [&_h2]:mb-2 [&_h2]:mt-4
+                      [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-purple-700 [&_h3]:mb-2 [&_h3]:mt-3
+                      [&_p]:text-sm [&_p]:mb-2 [&_p]:leading-relaxed
+                      [&_ul]:text-sm [&_ul]:mb-2 [&_ul]:pl-4 [&_ul]:list-disc
+                      [&_li]:mb-1
+                      [&_strong]:font-semibold [&_strong]:text-gray-900
+                      [&_hr]:my-3 [&_hr]:border-purple-200"
+                      dangerouslySetInnerHTML={{
+                        __html: selectedMeeting.aiGeneratedSummary
+                          .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                          .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                          .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+                          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/^---$/gm, '<hr />')
+                          .replace(/^- (.+)$/gm, '<li>$1</li>')
+                          .replace(/(<li>.*<\/li>\n?)+/g, (match: string) => `<ul>${match}</ul>`)
+                          .replace(/\n{2,}/g, '</p><p>')
+                          .replace(/\n/g, '<br />')
+                          .replace(/^(?!<[hul]|<hr|<li|<strong)(.+)/gm, '<p>$1</p>')
+                      }}
+                    />
                   </div>
                 )}
 

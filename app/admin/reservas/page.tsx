@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,10 +11,9 @@ import { Select } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Users, Calendar, Clock, MapPin, Phone, Mail, DollarSign, Plus, Trash2, Sparkles } from "lucide-react"
+import { Users, Calendar, Clock, MapPin, Phone, Mail, DollarSign, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import EventTimeline from "@/components/admin/EventTimeline"
-import AIEventAssistant from "@/components/admin/AIEventAssistant"
 import DrinkInventory from "@/components/admin/DrinkInventory"
 
 export default function ReservasAdminPage() {
@@ -30,6 +29,16 @@ export default function ReservasAdminPage() {
 
   const [selectedBooking, setSelectedBooking] = useState<any>(null)
 
+  // Sync selectedBooking with live query data
+  useEffect(() => {
+    if (selectedBooking && bookings) {
+      const updated = bookings.find((b: any) => b._id === selectedBooking._id)
+      if (updated) {
+        setSelectedBooking(updated)
+      }
+    }
+  }, [bookings])
+
   // Get meetings for selected booking
   const relatedMeetings = useQuery(
     api.meetings.getMeetingsByBooking,
@@ -42,7 +51,6 @@ export default function ReservasAdminPage() {
   const [filterStatus, setFilterStatus] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState<"info" | "timeline" | "menu" | "tragos">("info")
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false)
 
   const [paymentData, setPaymentData] = useState({
     totalAmount: 0,
@@ -403,13 +411,6 @@ export default function ReservasAdminPage() {
                       Información completa y gestión de la reserva
                     </DialogDescription>
                   </div>
-                  <Button
-                    onClick={() => setAiAssistantOpen(true)}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Asistente IA
-                  </Button>
                 </div>
               </DialogHeader>
 
@@ -996,14 +997,6 @@ export default function ReservasAdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* AI Event Assistant */}
-      {selectedBooking && (
-        <AIEventAssistant
-          bookingId={selectedBooking._id}
-          open={aiAssistantOpen}
-          onOpenChange={setAiAssistantOpen}
-        />
-      )}
     </div>
   )
 }

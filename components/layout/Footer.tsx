@@ -4,8 +4,8 @@ import { Facebook, Instagram, Mail, MapPin, Phone, Clock, Heart } from "lucide-r
 
 export default function Footer() {
   return (
-    <footer className="bg-nature-forest text-white">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="bg-gradient-to-br from-nature-forest-dark to-nature-forest text-white">
+      <div className="container mx-auto px-4 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Información del Centro */}
           <div className="lg:col-span-2">
@@ -50,11 +50,11 @@ export default function Footer() {
                   Espacios
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/galeria" className="text-gray-300 hover:text-white transition-colors text-sm">
                   Galería
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/reservas" className="text-gray-300 hover:text-white transition-colors text-sm">
                   Cotizaciones

@@ -128,8 +128,7 @@ export default function EditInvitationPage() {
 
   // Handle field change with live preview and debounced auto-save
   const handleFieldChange = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (field: keyof InvitationData, value: any) => {
+    (field: keyof InvitationData, value: unknown) => {
       if (!accessCode || !ownerEmail) return;
 
       // Update preview immediately

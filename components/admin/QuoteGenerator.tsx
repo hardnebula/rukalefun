@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Printer, FileDown, Edit2, Check, Plus, Trash2, Star, CalendarCheck, Clock } from "lucide-react"
+import { Printer, FileDown, Edit2, Check, Plus, Trash2, Star, CalendarCheck, Clock, Maximize2 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -58,6 +58,13 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
     specialRequests: ""
   })
   const [isConverting, setIsConverting] = useState(false)
+
+  // Estado para editor expandido
+  const [expandedEditor, setExpandedEditor] = useState<{
+    title: string
+    value: string
+    onSave: (value: string) => void
+  } | null>(null)
 
   const printRef = useRef<HTMLDivElement>(null)
 
@@ -342,13 +349,6 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
           <div ref={printRef} className="quote-container bg-white p-8 rounded-lg">
             {/* Header */}
             <div className="text-center mb-8">
-              <div className="flex justify-center mb-4">
-                <img
-                  src="/Logo.rukalefun.jpg"
-                  alt="Ruka Lefún Logo"
-                  className="h-16 object-contain"
-                />
-              </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Ruka Lefún
               </h1>
@@ -394,16 +394,33 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
                   Servicios Incluidos
                 </h3>
                 {isEditMode ? (
-                  <Textarea
-                    value={editableQuoteData.includedServices.join('\n')}
-                    onChange={(e) => setEditableQuoteData({
-                      ...editableQuoteData,
-                      includedServices: e.target.value.split('\n').filter(s => s.trim())
-                    })}
-                    rows={editableQuoteData.includedServices.length + 2}
-                    className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30"
-                    placeholder="Un servicio por línea"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      value={editableQuoteData.includedServices.join('\n')}
+                      onChange={(e) => setEditableQuoteData({
+                        ...editableQuoteData,
+                        includedServices: e.target.value.split('\n').filter(s => s.trim())
+                      })}
+                      rows={editableQuoteData.includedServices.length + 2}
+                      className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30 pr-10"
+                      placeholder="Un servicio por línea"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                      onClick={() => setExpandedEditor({
+                        title: "Servicios Incluidos",
+                        value: editableQuoteData.includedServices.join('\n'),
+                        onSave: (val) => setEditableQuoteData({
+                          ...editableQuoteData,
+                          includedServices: val.split('\n').filter(s => s.trim())
+                        })
+                      })}
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 ) : (
                   <ul className="space-y-2">
                     {editableQuoteData.includedServices.map((service: string, i: number) => (
@@ -424,16 +441,33 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
                   Servicios Adicionales <span className="font-normal">Incluidos</span>
                 </h3>
                 {isEditMode ? (
-                  <Textarea
-                    value={editableQuoteData.additionalServices.join('\n')}
-                    onChange={(e) => setEditableQuoteData({
-                      ...editableQuoteData,
-                      additionalServices: e.target.value.split('\n').filter(s => s.trim())
-                    })}
-                    rows={editableQuoteData.additionalServices.length + 2}
-                    className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30"
-                    placeholder="Un servicio por línea"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      value={editableQuoteData.additionalServices.join('\n')}
+                      onChange={(e) => setEditableQuoteData({
+                        ...editableQuoteData,
+                        additionalServices: e.target.value.split('\n').filter(s => s.trim())
+                      })}
+                      rows={editableQuoteData.additionalServices.length + 2}
+                      className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30 pr-10"
+                      placeholder="Un servicio por línea"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                      onClick={() => setExpandedEditor({
+                        title: "Servicios Adicionales",
+                        value: editableQuoteData.additionalServices.join('\n'),
+                        onSave: (val) => setEditableQuoteData({
+                          ...editableQuoteData,
+                          additionalServices: val.split('\n').filter(s => s.trim())
+                        })
+                      })}
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 ) : (
                   <ul className="space-y-2">
                     {editableQuoteData.additionalServices.map((service: string, i: number) => (
@@ -522,17 +556,39 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
 
                         {/* Platos */}
                         {isEditMode ? (
-                          <Textarea
-                            value={item.dishes.join('\n')}
-                            onChange={(e) => {
-                              const updated = [...editableQuoteData.menuSections]
-                              updated[sectionIdx].items[itemIdx].dishes = e.target.value.split('\n').filter((d: string) => d.trim())
-                              setEditableQuoteData({ ...editableQuoteData, menuSections: updated })
-                            }}
-                            rows={Math.max(item.dishes.length, 2)}
-                            className="text-center text-sm border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30"
-                            placeholder="Un plato por línea"
-                          />
+                          <div className="relative">
+                            <Textarea
+                              value={item.dishes.join('\n')}
+                              onChange={(e) => {
+                                const updated = [...editableQuoteData.menuSections]
+                                updated[sectionIdx].items[itemIdx].dishes = e.target.value.split('\n').filter((d: string) => d.trim())
+                                setEditableQuoteData({ ...editableQuoteData, menuSections: updated })
+                              }}
+                              rows={Math.max(item.dishes.length, 2)}
+                              className="text-center text-sm border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30 pr-10"
+                              placeholder="Un plato por línea"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="absolute top-1 right-1 h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                              onClick={() => {
+                                const sIdx = sectionIdx
+                                const iIdx = itemIdx
+                                setExpandedEditor({
+                                  title: `${section.name} - ${item.category}`,
+                                  value: item.dishes.join('\n'),
+                                  onSave: (val) => {
+                                    const updated = JSON.parse(JSON.stringify(editableQuoteData.menuSections))
+                                    updated[sIdx].items[iIdx].dishes = val.split('\n').filter((d: string) => d.trim())
+                                    setEditableQuoteData({ ...editableQuoteData, menuSections: updated })
+                                  }
+                                })
+                              }}
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         ) : (
                           <div className="text-center text-sm text-gray-700">
                             {item.dishes.map((dish: string, dishIdx: number) => (
@@ -626,15 +682,32 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
             {editableQuoteData && editableQuoteData.terms && (
               <div className="mb-8 text-sm text-gray-700">
                 {isEditMode ? (
-                  <Textarea
-                    value={editableQuoteData.terms}
-                    onChange={(e) => setEditableQuoteData({
-                      ...editableQuoteData,
-                      terms: e.target.value
-                    })}
-                    rows={6}
-                    className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      value={editableQuoteData.terms}
+                      onChange={(e) => setEditableQuoteData({
+                        ...editableQuoteData,
+                        terms: e.target.value
+                      })}
+                      rows={6}
+                      className="w-full border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30 pr-10"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute top-1 right-1 h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                      onClick={() => setExpandedEditor({
+                        title: "Condiciones Comerciales y Forma de Pago",
+                        value: editableQuoteData.terms,
+                        onSave: (val) => setEditableQuoteData({
+                          ...editableQuoteData,
+                          terms: val
+                        })
+                      })}
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 ) : (
                   <div className="whitespace-pre-line">{editableQuoteData.terms}</div>
                 )}
@@ -653,6 +726,48 @@ export default function QuoteGenerator({ open, onClose, quoteRequest, quickMode 
               </div>
             )}
           </div>
+
+          {/* Diálogo de Editor Expandido */}
+          <Dialog open={!!expandedEditor} onOpenChange={(open) => !open && setExpandedEditor(null)}>
+            <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>{expandedEditor?.title}</DialogTitle>
+                <DialogDescription>
+                  Edita el contenido con mas espacio. Un elemento por linea.
+                </DialogDescription>
+              </DialogHeader>
+              <Textarea
+                value={expandedEditor?.value || ""}
+                onChange={(e) => {
+                  if (expandedEditor) {
+                    setExpandedEditor({ ...expandedEditor, value: e.target.value })
+                  }
+                }}
+                className="flex-1 min-h-[400px] text-base border-2 border-green-200 focus:border-green-600 focus:ring-green-600 bg-green-50/30 resize-y"
+                autoFocus
+              />
+              <div className="flex gap-2 justify-end pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setExpandedEditor(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    if (expandedEditor) {
+                      expandedEditor.onSave(expandedEditor.value)
+                      setExpandedEditor(null)
+                    }
+                  }}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Aplicar Cambios
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Diálogo de Conversión a Reserva */}
           <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>

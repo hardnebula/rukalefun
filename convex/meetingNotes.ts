@@ -371,20 +371,20 @@ Por favor genera un resumen estructurado que incluya:
 
 Usa un tono profesional pero amigable. El resumen debe ser conciso pero completo.`;
 
-    // Llamar a OpenAI
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey) {
-      throw new Error("OPENAI_API_KEY no está configurada");
+    // Llamar a OpenRouter
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENROUTER_API_KEY no está configurada");
     }
 
-    const response: Response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response: Response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "openai/gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -400,7 +400,7 @@ Usa un tono profesional pero amigable. El resumen debe ser conciso pero completo
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Error de OpenAI: ${error}`);
+      throw new Error(`Error de OpenRouter: ${error}`);
     }
 
     const data: { choices: Array<{ message?: { content?: string } }> } = await response.json();

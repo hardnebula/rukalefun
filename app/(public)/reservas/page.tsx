@@ -168,16 +168,6 @@ export default function ReservasPage() {
               </CardContent>
             </Card>
 
-            {/* Imagen del Lugar */}
-            <Card className="overflow-hidden shadow-lg">
-              <div className="h-64">
-                <img 
-                  src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=800"
-                  alt="Centro de eventos Ruka Lefún"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </Card>
           </div>
 
           {/* Formulario Colapsable - Derecha */}

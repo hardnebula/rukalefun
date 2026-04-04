@@ -31,7 +31,7 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60 z-10" />
           <img
-            src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2400"
+            src="/Ceremonia/Ceremonia al aire libre.webp"
             alt="Centro de eventos Ruka Lefún en Villarrica - salón para matrimonios y eventos corporativos rodeado de naturaleza"
             className="w-full h-full object-cover"
             loading="eager"
@@ -46,16 +46,21 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-2">
+            <p className="text-sm md:text-base uppercase tracking-[0.3em] text-white/70 mb-4 font-light">
+              Centro de Eventos · Villarrica, Chile
+            </p>
+            <h1 className="font-serif text-6xl md:text-8xl font-bold text-white mb-4 leading-tight" style={{ textShadow: "0 2px 20px rgba(0,0,0,0.3)" }}>
               Ruka Lefún
             </h1>
-            <p className="text-2xl md:text-3xl font-light text-white/90 mb-6">
-              Centro de eventos en Villarrica
-            </p>
-            <p className="text-xl md:text-2xl text-white/90 mb-8">
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="h-px w-16 bg-white/40" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+              <div className="h-px w-16 bg-white/40" />
+            </div>
+            <p className="text-xl md:text-2xl font-light text-white/90 mb-8 tracking-wide">
               Matrimonios, eventos corporativos y celebraciones en el sur de Chile
             </p>
-            <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-white/75 mb-10 max-w-2xl mx-auto leading-relaxed">
               Salones rodeados de naturaleza para crear experiencias inolvidables en la Araucanía
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -89,92 +94,78 @@ export default function HomePage() {
       </section>
 
       {/* ¿Por qué elegirnos? */}
-      <section className="py-20 bg-white" aria-labelledby="porque-elegirnos">
+      <section className="py-24 bg-white" aria-labelledby="porque-elegirnos">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 id="porque-elegirnos" className="text-4xl font-bold text-gray-900 mb-4">
-              El Lugar Perfecto para tu Evento en Villarrica
+            <p className="text-sm uppercase tracking-[0.25em] text-nature-forest font-medium mb-3">Por qué elegirnos</p>
+            <h2 id="porque-elegirnos" className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              El Lugar Perfecto para tu Evento
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Combinamos naturaleza, elegancia y servicio excepcional para crear momentos inolvidables
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+              Combinamos naturaleza, elegancia y servicio excepcional para crear momentos inolvidables en Villarrica
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-            >
-              <Card className="text-center h-full hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-gradient-to-br from-nature-forest/10 to-nature-moss/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                    <MapPin className="h-8 w-8 text-nature-forest" />
-                  </div>
-                  <CardTitle>Ubicación Privilegiada</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    Rodeados por la naturaleza del sur de Chile en Villarrica, con vistas espectaculares y aire puro.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              viewport={{ once: true }}
-            >
-              <Card className="text-center h-full hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-nature-lake/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                    <Users className="h-8 w-8 text-nature-lake" />
-                  </div>
-                  <CardTitle>Espacios Versátiles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    Salones adaptables para matrimonios, eventos corporativos, cumpleaños y celebraciones de todo tipo.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <Card className="text-center h-full hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="mx-auto bg-amber-500/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                    <Sparkles className="h-8 w-8 text-amber-500" />
-                  </div>
-                  <CardTitle>Servicio Integral</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    Catering, decoración, audio y video. Todo lo que necesitas para que tu evento sea perfecto.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                icon: MapPin,
+                color: "text-nature-forest",
+                bg: "bg-gradient-to-br from-nature-forest/10 to-nature-moss/10",
+                title: "Ubicación Privilegiada",
+                desc: "Rodeados por la naturaleza del sur de Chile en Villarrica, con vistas espectaculares y aire puro.",
+                delay: 0,
+              },
+              {
+                icon: Users,
+                color: "text-nature-teal",
+                bg: "bg-gradient-to-br from-nature-teal/10 to-nature-lake/10",
+                title: "Espacios Versátiles",
+                desc: "Salones adaptables para matrimonios, eventos corporativos, cumpleaños y celebraciones de todo tipo.",
+                delay: 0.1,
+              },
+              {
+                icon: Sparkles,
+                color: "text-amber-600",
+                bg: "bg-gradient-to-br from-amber-500/10 to-amber-600/10",
+                title: "Servicio Integral",
+                desc: "Catering, decoración, audio y video. Todo lo que necesitas para que tu evento sea perfecto.",
+                delay: 0.2,
+              },
+            ].map(({ icon: Icon, color, bg, title, desc, delay }) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay }}
+                viewport={{ once: true }}
+              >
+                <Card className="text-center h-full border border-gray-100 hover:border-nature-forest/20 hover:shadow-xl transition-all duration-300 cursor-default group">
+                  <CardHeader className="pb-3">
+                    <div className={`mx-auto ${bg} w-20 h-20 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className={`h-9 w-9 ${color}`} />
+                    </div>
+                    <CardTitle className="font-serif text-xl text-gray-900">{title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500 text-base leading-relaxed">{desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Espacios Disponibles */}
-      <section className="py-20 bg-gray-50" aria-labelledby="nuestros-espacios">
+      <section className="py-24 bg-[#f8f6f2]" aria-labelledby="nuestros-espacios">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 id="nuestros-espacios" className="text-4xl font-bold text-gray-900 mb-4">
-              Nuestros Espacios para Eventos
+            <p className="text-sm uppercase tracking-[0.25em] text-nature-forest font-medium mb-3">Nuestros espacios</p>
+            <h2 id="nuestros-espacios" className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Espacios para Cada Evento
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Salones y áreas al aire libre diseñados para matrimonios, cumpleaños y eventos corporativos
             </p>
           </div>
@@ -190,7 +181,7 @@ export default function HomePage() {
                 // Use local images for spaces
                 const getSpaceImage = () => {
                   if (space.name.toLowerCase().includes("principal")) {
-                    return "/Salon Principal/SalonPrincipal.jpeg";
+                    return "/Salon Principal/SalonPrincipal.webp";
                   }
                   if (space.name.toLowerCase().includes("ceremonia")) {
                     return "/Ceremonia/Ceremonia al aire libre.webp";
@@ -208,23 +199,24 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card className="overflow-hidden hover:shadow-xl transition-shadow" itemScope itemType="https://schema.org/Place">
-                    <div className="h-48 relative overflow-hidden group">
+                  <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer border border-gray-100 hover:border-nature-forest/20 group" itemScope itemType="https://schema.org/Place">
+                    <div className="h-56 relative overflow-hidden">
                       <img
                         src={getSpaceImage()}
                         alt={`${space.name} - espacio para eventos en Ruka Lefún Villarrica`}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         loading="lazy"
                         itemProp="image"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <CardHeader>
-                      <CardTitle itemProp="name">{space.name}</CardTitle>
-                      <CardDescription className="line-clamp-3" itemProp="description">{space.description}</CardDescription>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="font-serif text-xl" itemProp="name">{space.name}</CardTitle>
+                      <CardDescription className="line-clamp-2 text-sm leading-relaxed" itemProp="description">{space.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Link href={`/espacios#${space._id}`} className="block">
-                        <Button className="w-full bg-gradient-nature hover:opacity-90 text-white shadow-lg transition-all">
+                        <Button className="w-full bg-gradient-nature hover:opacity-90 text-white shadow-md transition-all duration-200 cursor-pointer">
                           Ver Detalles
                         </Button>
                       </Link>
@@ -269,12 +261,12 @@ export default function HomePage() {
               viewport={{ once: true }}
               className="text-center lg:text-left order-2 lg:order-1"
             >
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-orange-500/10 text-pink-600 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 bg-nature-forest/10 text-nature-forest rounded-full px-4 py-1.5 text-sm font-medium mb-6">
                 <Play className="w-4 h-4" />
                 Mira Nuestro Espacio
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                Vive la Experiencia Ruka Lefun
+              <h2 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                Vive la Experiencia Ruka Lefún
               </h2>
               <p className="text-lg text-gray-600 mb-8 max-w-lg">
                 Descubre por que somos el lugar favorito para celebrar los momentos mas importantes.
@@ -291,7 +283,7 @@ export default function HomePage() {
                 </div>
               </div>
               <Link href="/reservas">
-                <Button size="lg" className="bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 hover:opacity-90 text-white shadow-lg">
+                <Button size="lg" className="bg-gradient-nature hover:opacity-90 text-white shadow-lg cursor-pointer transition-all duration-200">
                   Reserva Tu Evento
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -316,7 +308,7 @@ export default function HomePage() {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center gap-3">
                         {/* Profile pic with gradient border */}
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-orange-500 p-[2px]">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-nature-forest via-nature-moss to-nature-teal p-[2px]">
                           <div className="w-full h-full rounded-full bg-white p-[2px]">
                             <div className="w-full h-full rounded-full bg-nature-forest flex items-center justify-center">
                               <span className="text-white text-xs font-bold">RL</span>
@@ -433,7 +425,7 @@ export default function HomePage() {
                 <Heart className="w-4 h-4" />
                 Nuevo Servicio
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              <h2 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Invitaciones de Matrimonio Digitales
               </h2>
               <p className="text-lg text-gray-600 mb-8 max-w-lg">
@@ -467,7 +459,7 @@ export default function HomePage() {
               className="relative flex justify-center"
             >
               {/* Scroll indicator - notification style */}
-              <div className="absolute left-4 top-1/4 hidden lg:flex flex-col items-end gap-2 z-10">
+              <div className="absolute left-12 top-1/4 hidden lg:flex flex-col items-center gap-2 z-10">
                 <motion.div
                   animate={{ opacity: [0.7, 1, 0.7] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
@@ -478,7 +470,7 @@ export default function HomePage() {
                   </div>
                 </motion.div>
                 {/* Scroll line indicator */}
-                <div className="w-[3px] h-10 rounded-full bg-white/30 relative overflow-hidden mr-6">
+                <div className="w-[3px] h-10 rounded-full bg-white/30 relative overflow-hidden">
                   <motion.div
                     animate={{ y: [0, 24, 0] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -533,7 +525,7 @@ export default function HomePage() {
                           </div>
                           <div className="max-w-[200px] text-center border-t border-[#2D5016]/20 pt-4">
                             <p className="text-sm italic text-[#5c4a3a]/80 leading-relaxed">
-                              "Nada es eterno, salvo un beso sincero y una copa compartida"
+                              &ldquo;Nada es eterno, salvo un beso sincero y una copa compartida&rdquo;
                             </p>
                           </div>
                         </div>
@@ -655,13 +647,14 @@ export default function HomePage() {
       <FAQSection />
 
       {/* Testimonios */}
-      <section className="py-20 bg-white" aria-labelledby="testimonios">
+      <section className="py-24 bg-white" aria-labelledby="testimonios">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 id="testimonios" className="text-4xl font-bold text-gray-900 mb-4">
-              Opiniones de Clientes en Ruka Lefún
+            <p className="text-sm uppercase tracking-[0.25em] text-nature-forest font-medium mb-3">Testimonios</p>
+            <h2 id="testimonios" className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Lo Que Dicen Nuestros Clientes
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
               Matrimonios y eventos que superaron expectativas en Villarrica
             </p>
           </div>
@@ -678,9 +671,10 @@ export default function HomePage() {
                   itemScope
                   itemType="https://schema.org/Review"
                 >
-                  <Card className="h-full">
-                    <CardHeader>
-                      <div className="flex items-center space-x-1 mb-2" itemProp="reviewRating" itemScope itemType="https://schema.org/Rating">
+                  <Card className="h-full border border-gray-100 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden">
+                    <div className="absolute top-4 left-5 text-6xl font-serif text-nature-forest/10 leading-none select-none">&ldquo;</div>
+                    <CardHeader className="pb-3 pt-8">
+                      <div className="flex items-center space-x-1 mb-3" itemProp="reviewRating" itemScope itemType="https://schema.org/Rating">
                         <meta itemProp="ratingValue" content={String(testimonial.rating)} />
                         <meta itemProp="bestRating" content="5" />
                         {Array.from({ length: 5 }).map((_, i) => (
@@ -689,16 +683,23 @@ export default function HomePage() {
                             className={`h-4 w-4 ${
                               i < testimonial.rating
                                 ? "fill-amber-400 text-amber-400"
-                                : "text-gray-300"
+                                : "text-gray-200"
                             }`}
                           />
                         ))}
                       </div>
-                      <CardTitle className="text-lg" itemProp="author">{testimonial.clientName}</CardTitle>
-                      <CardDescription>{testimonial.eventType}</CardDescription>
+                      <p className="text-gray-600 italic text-sm leading-relaxed" itemProp="reviewBody">&ldquo;{testimonial.comment}&rdquo;</p>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 italic" itemProp="reviewBody">&ldquo;{testimonial.comment}&rdquo;</p>
+                    <CardContent className="pt-0">
+                      <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-nature-forest to-nature-moss flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">{testimonial.clientName.charAt(0)}</span>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm" itemProp="author">{testimonial.clientName}</p>
+                          <p className="text-xs text-gray-400">{testimonial.eventType}</p>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -713,8 +714,9 @@ export default function HomePage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 bg-gradient-to-br from-nature-forest via-nature-moss to-nature-emerald text-white relative overflow-hidden" aria-labelledby="cta-reserva">
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"></div>
+      <section className="py-24 bg-gradient-to-br from-nature-forest via-nature-moss to-nature-emerald text-white relative overflow-hidden" aria-labelledby="cta-reserva">
+        <div className="absolute inset-0 bg-[url('/Ceremonia/Ceremonia al aire libre.webp')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-nature-forest/95 via-nature-moss/90 to-nature-emerald/95"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -722,10 +724,16 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 id="cta-reserva" className="text-4xl md:text-5xl font-bold mb-6">
+            <p className="text-sm uppercase tracking-[0.3em] text-white/60 mb-4">Reserva tu evento</p>
+            <h2 id="cta-reserva" className="font-serif text-4xl md:text-6xl font-bold mb-6 leading-tight">
               Cotiza tu Evento en Villarrica
             </h2>
-            <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <div className="h-px w-16 bg-white/30" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/50" />
+              <div className="h-px w-16 bg-white/30" />
+            </div>
+            <p className="text-xl text-white/85 mb-10 max-w-2xl mx-auto leading-relaxed">
               Reserva tu matrimonio, cumpleaños o evento corporativo en Ruka Lefún
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

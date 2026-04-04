@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
-import { Trash2, Printer } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Trash2, Printer, Plus, User } from "lucide-react"
 import { toast } from "sonner"
 
 interface EventTimelineProps {
@@ -18,11 +19,10 @@ export default function EventTimeline({ bookingId, booking }: EventTimelineProps
   const updateActivity = useMutation(api.eventTasks.updateTimelineActivity)
   const deleteActivity = useMutation(api.eventTasks.deleteTimelineActivity)
 
-  // Estado para nueva fila
   const [newRow, setNewRow] = useState({ time: "", activity: "", notes: "" })
+  const [showAddForm, setShowAddForm] = useState(false)
   const timeInputRef = useRef<HTMLInputElement>(null)
 
-  // Agregar nueva actividad
   const handleAddRow = async () => {
     if (!newRow.activity.trim()) return
 
@@ -37,21 +37,23 @@ export default function EventTimeline({ bookingId, booking }: EventTimelineProps
         order: nextOrder,
       })
       setNewRow({ time: "", activity: "", notes: "" })
-      timeInputRef.current?.focus()
+      setShowAddForm(false)
     } catch (error) {
       toast.error("Error al agregar")
     }
   }
 
-  // Enter para agregar
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && newRow.activity.trim()) {
       e.preventDefault()
       handleAddRow()
     }
+    if (e.key === "Escape") {
+      setShowAddForm(false)
+      setNewRow({ time: "", activity: "", notes: "" })
+    }
   }
 
-  // Actualizar actividad existente
   const handleUpdate = async (id: string, field: string, value: string) => {
     try {
       const updates: any = {}
@@ -64,7 +66,6 @@ export default function EventTimeline({ bookingId, booking }: EventTimelineProps
     }
   }
 
-  // Eliminar
   const handleDelete = async (id: string) => {
     try {
       await deleteActivity({ id: id as any })
@@ -73,7 +74,6 @@ export default function EventTimeline({ bookingId, booking }: EventTimelineProps
     }
   }
 
-  // Imprimir
   const handlePrint = () => window.print()
 
   return (
@@ -82,108 +82,118 @@ export default function EventTimeline({ bookingId, booking }: EventTimelineProps
         @media print {
           .no-print { display: none !important; }
           @page { margin: 1.5cm; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #333 !important; padding: 8px !important; }
-          th { background: #f3f4f6 !important; }
-          input { border: none !important; background: transparent !important; }
         }
       `}</style>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 no-print">
+      <div className="flex items-center justify-between mb-6 no-print">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Cronograma</h3>
           <p className="text-sm text-gray-500">
             {timeline?.length || 0} actividades
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handlePrint}>
-          <Printer className="w-4 h-4 mr-1" />
-          Imprimir
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowAddForm(true)
+              setTimeout(() => timeInputRef.current?.focus(), 100)
+            }}
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Agregar
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-1" />
+            Imprimir
+          </Button>
+        </div>
       </div>
 
-      {/* Tabla tipo Excel */}
-      <div className="border rounded-lg overflow-hidden bg-white">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-100 border-b">
-              <th className="text-left p-3 text-sm font-semibold text-gray-700 w-24">Hora</th>
-              <th className="text-left p-3 text-sm font-semibold text-gray-700">Actividad</th>
-              <th className="text-left p-3 text-sm font-semibold text-gray-700 w-1/3">Notas</th>
-              <th className="w-10 no-print"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Filas existentes */}
-            {timeline?.map((activity) => (
-              <TimelineRow
-                key={activity._id}
-                activity={activity}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-              />
-            ))}
+      {/* Visual timeline */}
+      <div className="relative border-l-2 border-purple-300 ml-4 pl-6 space-y-4">
+        {timeline?.map((activity) => (
+          <TimelineCard
+            key={activity._id}
+            activity={activity}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
+        ))}
 
-            {/* Nueva fila (siempre visible) */}
-            <tr className="border-t bg-green-50/50 no-print">
-              <td className="p-1">
+        {/* Add new activity form */}
+        {showAddForm && (
+          <div className="relative no-print">
+            <div className="absolute -left-[29px] w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow" />
+            <div className="bg-green-50 border border-green-200 border-dashed rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
                 <input
                   ref={timeInputRef}
                   type="time"
                   value={newRow.time}
                   onChange={(e) => setNewRow({ ...newRow, time: e.target.value })}
                   onKeyDown={handleKeyDown}
-                  className="w-full p-2 border-0 bg-transparent focus:ring-2 focus:ring-green-500 rounded"
-                  placeholder="00:00"
+                  className="w-24 px-2 py-1.5 border border-green-300 rounded-md text-lg font-bold text-purple-600 bg-white focus:ring-2 focus:ring-green-500 focus:outline-none"
                 />
-              </td>
-              <td className="p-1">
                 <input
                   type="text"
                   value={newRow.activity}
                   onChange={(e) => setNewRow({ ...newRow, activity: e.target.value })}
                   onKeyDown={handleKeyDown}
-                  className="w-full p-2 border-0 bg-transparent focus:ring-2 focus:ring-green-500 rounded"
-                  placeholder="+ Nueva actividad (Enter para agregar)"
+                  className="flex-1 px-2 py-1.5 border border-green-300 rounded-md font-semibold bg-white focus:ring-2 focus:ring-green-500 focus:outline-none"
+                  placeholder="Nombre de la actividad"
                 />
-              </td>
-              <td className="p-1">
-                <input
-                  type="text"
-                  value={newRow.notes}
-                  onChange={(e) => setNewRow({ ...newRow, notes: e.target.value })}
-                  onKeyDown={handleKeyDown}
-                  className="w-full p-2 border-0 bg-transparent focus:ring-2 focus:ring-green-500 rounded"
-                  placeholder="Notas..."
-                />
-              </td>
-              <td className="p-1">
+              </div>
+              <input
+                type="text"
+                value={newRow.notes}
+                onChange={(e) => setNewRow({ ...newRow, notes: e.target.value })}
+                onKeyDown={handleKeyDown}
+                className="w-full px-2 py-1.5 border border-green-300 rounded-md text-sm text-gray-600 bg-white focus:ring-2 focus:ring-green-500 focus:outline-none"
+                placeholder="Descripción o notas (opcional)"
+              />
+              <div className="flex justify-end gap-2">
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setNewRow({ time: "", activity: "", notes: "" })
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
                   onClick={handleAddRow}
                   disabled={!newRow.activity.trim()}
-                  className="h-8 w-8 p-0 text-green-600"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  +
+                  <Plus className="w-4 h-4 mr-1" />
+                  Agregar
                 </Button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Tip */}
-      <p className="text-xs text-gray-400 mt-2 text-center no-print">
-        Escribe y presiona Enter para agregar. Edita directamente las celdas.
-      </p>
+        {/* Empty state */}
+        {timeline?.length === 0 && !showAddForm && (
+          <div className="relative">
+            <div className="absolute -left-[29px] w-4 h-4 rounded-full bg-gray-300" />
+            <div className="text-sm text-gray-400 py-4">
+              No hay actividades. Haz clic en &quot;Agregar&quot; para crear la primera.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-// Componente de fila individual (editable inline)
-function TimelineRow({
+function TimelineCard({
   activity,
   onUpdate,
   onDelete,
@@ -192,13 +202,13 @@ function TimelineRow({
   onUpdate: (id: string, field: string, value: string) => void
   onDelete: (id: string) => void
 }) {
+  const [editingTime, setEditingTime] = useState(false)
   const [values, setValues] = useState({
     time: activity.scheduledTime,
     activity: activity.activityName,
     notes: activity.description || "",
   })
 
-  // Actualizar al perder foco si cambió
   const handleBlur = (field: string) => {
     const originalValue =
       field === "time" ? activity.scheduledTime :
@@ -208,48 +218,63 @@ function TimelineRow({
     if (values[field as keyof typeof values] !== originalValue) {
       onUpdate(activity._id, field, values[field as keyof typeof values])
     }
+    if (field === "time") setEditingTime(false)
   }
 
   return (
-    <tr className="border-t hover:bg-gray-50 group">
-      <td className="p-1">
-        <input
-          type="time"
-          value={values.time}
-          onChange={(e) => setValues({ ...values, time: e.target.value })}
-          onBlur={() => handleBlur("time")}
-          className="w-full p-2 border-0 bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded font-medium"
-        />
-      </td>
-      <td className="p-1">
-        <input
-          type="text"
-          value={values.activity}
-          onChange={(e) => setValues({ ...values, activity: e.target.value })}
-          onBlur={() => handleBlur("activity")}
-          className="w-full p-2 border-0 bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded"
-        />
-      </td>
-      <td className="p-1">
+    <div className="relative group">
+      <div className="absolute -left-[29px] w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow" />
+      <div className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              {editingTime ? (
+                <input
+                  type="time"
+                  value={values.time}
+                  onChange={(e) => setValues({ ...values, time: e.target.value })}
+                  onBlur={() => handleBlur("time")}
+                  autoFocus
+                  className="text-lg font-bold text-purple-600 border border-purple-300 rounded px-1 py-0.5 w-28 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              ) : (
+                <span
+                  onClick={() => setEditingTime(true)}
+                  className="text-lg font-bold text-purple-600 cursor-pointer hover:bg-purple-50 rounded px-1 py-0.5 -ml-1"
+                >
+                  {values.time || "00:00"}
+                </span>
+              )}
+              <Badge variant="outline" className="text-xs shrink-0">
+                {activity.duration} min
+              </Badge>
+            </div>
+            <input
+              type="text"
+              value={values.activity}
+              onChange={(e) => setValues({ ...values, activity: e.target.value })}
+              onBlur={() => handleBlur("activity")}
+              className="font-semibold text-base bg-transparent border-0 p-0 w-full focus:ring-0 focus:outline-none hover:bg-gray-50 rounded px-1 -ml-1 cursor-text"
+            />
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onDelete(activity._id)}
+            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 shrink-0 no-print"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
         <input
           type="text"
           value={values.notes}
           onChange={(e) => setValues({ ...values, notes: e.target.value })}
           onBlur={() => handleBlur("notes")}
-          className="w-full p-2 border-0 bg-transparent hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 rounded text-gray-600 text-sm"
-          placeholder="..."
+          className="text-sm text-gray-700 bg-transparent border-0 p-0 w-full mt-1 focus:ring-0 focus:outline-none hover:bg-gray-50 rounded px-1 -ml-1 cursor-text"
+          placeholder="Agregar descripción..."
         />
-      </td>
-      <td className="p-1 no-print">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onDelete(activity._id)}
-          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </td>
-    </tr>
+      </div>
+    </div>
   )
 }

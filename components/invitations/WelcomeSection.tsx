@@ -294,21 +294,34 @@ export default function WelcomeSection({
           transition={{ duration: 0.5, delay: 1.5 }}
           className="mt-16"
         >
-          <div className="flex flex-col items-center" style={{ color: colors.primary }}>
-            <span className="text-xs uppercase tracking-widest mb-3 opacity-70">Desliza</span>
-            {/* Scroll line indicator */}
-            <div
-              className="w-[2px] h-12 rounded-full relative overflow-hidden opacity-50"
-              style={{ backgroundColor: `${colors.primary}30` }}
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="flex flex-col items-center cursor-pointer"
+            style={{ color: colors.primary }}
+            onClick={() => {
+              const nextSection = document.querySelector("section:nth-of-type(2)");
+              if (nextSection) nextSection.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            <span className="text-[11px] uppercase tracking-[0.25em] mb-2 opacity-60 font-light">
+              Desliza
+            </span>
+            <svg
+              width="20"
+              height="28"
+              viewBox="0 0 20 28"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="opacity-50"
             >
-              <motion.div
-                animate={{ y: [0, 32, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="w-full h-4 rounded-full"
-                style={{ backgroundColor: colors.primary }}
-              />
-            </div>
-          </div>
+              <path d="M10 0 L10 24" />
+              <path d="M3 17 L10 24 L17 17" />
+            </svg>
+          </motion.div>
         </motion.div>
       </motion.div>
 
