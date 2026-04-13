@@ -50,11 +50,6 @@ export default function Footer() {
                   Espacios
                 </Link>
               </li>
-              {/* <li>
-                <Link href="/galeria" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  Galería
-                </Link>
-              </li> */}
               <li>
                 <Link href="/reservas" className="text-gray-300 hover:text-white transition-colors text-sm">
                   Cotizaciones

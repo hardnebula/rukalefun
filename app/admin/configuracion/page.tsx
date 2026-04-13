@@ -318,12 +318,6 @@ function DashboardTab() {
                 <span className="text-sm">Calendario</span>
               </a>
             </Button>
-            <Button variant="outline" className="h-auto flex-col py-4" asChild>
-              <a href="/admin/galeria">
-                <Eye className="w-8 h-8 mb-2" />
-                <span className="text-sm">Galería</span>
-              </a>
-            </Button>
           </div>
         </CardContent>
       </Card>

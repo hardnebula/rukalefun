@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Users, Star, Camera, Sparkles, MapPin, Heart, Gift, ArrowRight, Play, MessageCircle, Send, Bookmark } from "lucide-react"
+import { Calendar, Users, Star, Sparkles, MapPin, Heart, Gift, ArrowRight, Play, MessageCircle, Send, Bookmark } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -68,15 +68,6 @@ export default function HomePage() {
                 <Button size="lg" className="bg-gradient-nature hover:opacity-90 text-white text-lg px-8 w-full sm:w-auto shadow-xl transition-all hover:scale-105">
                   <Calendar className="mr-2 h-5 w-5" />
                   Reservar Ahora
-                </Button>
-              </Link>
-              <Link href="/galeria">
-                <Button 
-                  size="lg" 
-                  className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-2 border-white text-lg px-8 w-full sm:w-auto"
-                >
-                  <Camera className="mr-2 h-5 w-5" />
-                  Ver Galería
                 </Button>
               </Link>
             </div>

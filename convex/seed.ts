@@ -153,95 +153,6 @@ export const seedTestimonials = mutation({
   },
 });
 
-// Script para agregar imágenes a la galería
-export const seedGallery = mutation({
-  handler: async (ctx) => {
-    const existingGallery = await ctx.db.query("gallery").collect();
-    
-    if (existingGallery.length > 0) {
-      console.log("Ya existen imágenes en la galería. Limpiando...");
-      for (const item of existingGallery) {
-        await ctx.db.delete(item._id);
-      }
-    }
-
-    // Imágenes de bodas
-    await ctx.db.insert("gallery", {
-      title: "Ceremonia en el Bosque",
-      imageUrl: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1200",
-      category: "boda",
-      isPublic: true,
-      order: 1,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Recepción Elegante",
-      imageUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1200",
-      category: "boda",
-      isPublic: true,
-      order: 2,
-    });
-
-    // Imágenes de eventos corporativos
-    await ctx.db.insert("gallery", {
-      title: "Evento Corporativo",
-      imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?q=80&w=1200",
-      category: "corporativo",
-      isPublic: true,
-      order: 3,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Conferencia Empresarial",
-      imageUrl: "https://images.unsplash.com/photo-1478146896981-b80fe463b330?q=80&w=1200",
-      category: "corporativo",
-      isPublic: true,
-      order: 4,
-    });
-
-    // Imágenes de espacios
-    await ctx.db.insert("gallery", {
-      title: "Vista del Salón Principal",
-      imageUrl: "https://images.unsplash.com/photo-1519167758481-83f29da8dbc6?q=80&w=1200",
-      category: "espacio",
-      isPublic: true,
-      order: 5,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Área Natural",
-      imageUrl: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=1200",
-      category: "espacio",
-      isPublic: true,
-      order: 6,
-    });
-
-    // Imágenes de celebraciones
-    await ctx.db.insert("gallery", {
-      title: "Celebración Familiar",
-      imageUrl: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=1200",
-      category: "cumpleanos",
-      isPublic: true,
-      order: 7,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Fiesta al Aire Libre",
-      imageUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=1200",
-      category: "cumpleanos",
-      isPublic: true,
-      order: 8,
-    });
-
-    console.log("✅ Galería poblada exitosamente");
-
-    return {
-      success: true,
-      message: "8 imágenes agregadas a la galería"
-    };
-  },
-});
-
 // Script completo para poblar todo
 export const seedAll = mutation({
   handler: async (ctx) => {
@@ -250,16 +161,12 @@ export const seedAll = mutation({
     // Limpiar datos existentes
     const existingSpaces = await ctx.db.query("spaces").collect();
     const existingTestimonials = await ctx.db.query("testimonials").collect();
-    const existingGallery = await ctx.db.query("gallery").collect();
 
     for (const space of existingSpaces) {
       await ctx.db.delete(space._id);
     }
     for (const testimonial of existingTestimonials) {
       await ctx.db.delete(testimonial._id);
-    }
-    for (const item of existingGallery) {
-      await ctx.db.delete(item._id);
     }
 
     // ESPACIOS
@@ -368,82 +275,14 @@ export const seedAll = mutation({
       createdAt: Date.now(),
     });
 
-    // GALERÍA
-    console.log("🖼️ Poblando galería...");
-
-    await ctx.db.insert("gallery", {
-      title: "Ceremonia en el Bosque",
-      imageUrl: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1200",
-      category: "boda",
-      isPublic: true,
-      order: 1,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Recepción Elegante",
-      imageUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1200",
-      category: "boda",
-      isPublic: true,
-      order: 2,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Evento Corporativo",
-      imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?q=80&w=1200",
-      category: "corporativo",
-      isPublic: true,
-      order: 3,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Conferencia Empresarial",
-      imageUrl: "https://images.unsplash.com/photo-1478146896981-b80fe463b330?q=80&w=1200",
-      category: "corporativo",
-      isPublic: true,
-      order: 4,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Vista del Salón Principal",
-      imageUrl: "https://images.unsplash.com/photo-1519167758481-83f29da8dbc6?q=80&w=1200",
-      category: "espacio",
-      isPublic: true,
-      order: 5,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Área Natural",
-      imageUrl: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=1200",
-      category: "espacio",
-      isPublic: true,
-      order: 6,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Celebración Familiar",
-      imageUrl: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=1200",
-      category: "cumpleanos",
-      isPublic: true,
-      order: 7,
-    });
-
-    await ctx.db.insert("gallery", {
-      title: "Fiesta al Aire Libre",
-      imageUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=1200",
-      category: "cumpleanos",
-      isPublic: true,
-      order: 8,
-    });
-    
     console.log("✅ Seed completo finalizado exitosamente!");
     console.log("📊 Resumen:");
     console.log("   - 3 espacios creados");
     console.log("   - 3 testimonios agregados");
-    console.log("   - 8 imágenes en galería");
-    
+
     return {
       success: true,
-      message: "✅ Base de datos de Ruka Lefún poblada completamente: 3 espacios, 3 testimonios y 8 imágenes en galería"
+      message: "✅ Base de datos de Ruka Lefún poblada completamente: 3 espacios y 3 testimonios"
     };
   },
 });

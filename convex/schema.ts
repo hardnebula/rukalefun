@@ -159,18 +159,6 @@ export default defineSchema({
   }).index("by_event_type", ["eventType"])
     .index("by_active", ["isActive"]),
 
-  // Galería de fotos
-  gallery: defineTable({
-    title: v.string(),
-    imageUrl: v.string(),
-    thumbnailUrl: v.optional(v.string()),
-    category: v.string(), // boda, corporativo, cumpleaños, espacio, etc.
-    eventDate: v.optional(v.string()),
-    isPublic: v.boolean(),
-    order: v.number(),
-  }).index("by_category", ["category"])
-    .index("by_public", ["isPublic"]),
-
   // Recursos e inventario
   resources: defineTable({
     name: v.string(),
