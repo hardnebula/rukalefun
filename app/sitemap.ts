@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.rukalefun.cl'
+  const baseUrl = 'https://www.lefun.cl'
 
   // Páginas estáticas principales
   const routes = [

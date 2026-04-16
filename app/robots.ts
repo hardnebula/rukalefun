@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/'],
       },
     ],
-    sitemap: 'https://www.rukalefun.cl/sitemap.xml',
+    sitemap: 'https://www.lefun.cl/sitemap.xml',
   }
 }

@@ -1,20 +1,38 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Cotizaciones y Reservas",
-  description: "Solicita tu cotización personalizada para tu evento en Ruka Lefún. Completa el formulario y nos contactaremos contigo en 24-48 horas con los mejores precios para tu celebración.",
+  title: "Cotiza tu Evento en Villarrica",
+  description: "Completa el formulario y recibe tu presupuesto personalizado en menos de 48 horas. Matrimonios, eventos corporativos y celebraciones en Villarrica.",
   keywords: [
-    "cotización eventos villarrica",
-    "reservar eventos",
-    "solicitar presupuesto matrimonio",
-    "cotizar evento corporativo",
+    "cotizar evento villarrica",
+    "presupuesto matrimonio villarrica",
+    "reservar salón villarrica",
+    "cotización evento corporativo villarrica",
     "reservas ruka lefún",
   ],
   openGraph: {
-    title: "Cotizaciones y Reservas - Ruka Lefún",
-    description: "Solicita tu cotización personalizada y reserva tu fecha para el evento perfecto en Ruka Lefún.",
-    url: "https://www.rukalefun.cl/reservas",
     type: "website",
+    locale: "es_CL",
+    url: "https://www.lefun.cl/reservas",
+    siteName: "Ruka Lefún",
+    title: "Cotiza tu Evento en Villarrica | Ruka Lefún",
+    description: "Completa el formulario y recibe tu presupuesto personalizado en menos de 48 horas. Matrimonios, eventos corporativos y celebraciones en Villarrica.",
+    images: [
+      {
+        url: "/og-image.webp",
+        width: 1200,
+        height: 630,
+        alt: "Ceremonia al aire libre en Ruka Lefún, Centro de Eventos en Villarrica",
+        type: "image/webp",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@rukalefun",
+    title: "Cotiza tu Evento en Villarrica | Ruka Lefún",
+    description: "Recibe tu presupuesto personalizado en menos de 48 horas. Matrimonios y eventos en Villarrica.",
+    images: ["/og-image.webp"],
   },
 }
 

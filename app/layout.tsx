@@ -19,12 +19,12 @@ const cormorant = Cormorant_Garamond({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.rukalefun.cl'),
+  metadataBase: new URL('https://www.lefun.cl'),
   title: {
-    default: "Ruka Lefún | Centro de Eventos y Matrimonios en Villarrica, Chile",
-    template: "%s | Ruka Lefún - Eventos Villarrica"
+    default: "Ruka Lefún | Matrimonios y Eventos en Villarrica, Chile",
+    template: "%s | Ruka Lefún"
   },
-  description: "Arrienda salones para matrimonios, cumpleaños y eventos corporativos en Villarrica. Centro de eventos rodeado de naturaleza en la Araucanía. Cotiza gratis.",
+  description: "Salones para matrimonios, eventos corporativos y celebraciones en Villarrica, rodeados de naturaleza en la Araucanía. ¡Cotiza gratis y reserva tu fecha!",
   keywords: [
     "centro de eventos villarrica",
     "matrimonios villarrica",
@@ -48,24 +48,32 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_CL",
-    url: "https://www.rukalefun.cl",
+    url: "https://www.lefun.cl",
     siteName: "Ruka Lefún",
-    title: "Ruka Lefún | Matrimonios y Eventos en Villarrica, Chile",
-    description: "Arrienda salones para matrimonios, cumpleaños y eventos corporativos en Villarrica. Rodeados de naturaleza en la Araucanía. Cotiza gratis.",
+    title: "Ruka Lefún | Matrimonios y Eventos en Villarrica",
+    description: "Salones rodeados de naturaleza en la Araucanía para matrimonios, eventos corporativos y celebraciones. ¡Cotiza gratis y reserva tu fecha!",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/og-image.webp",
         width: 1200,
         height: 630,
-        alt: "Ruka Lefún - Centro de Eventos para Matrimonios en Villarrica Chile",
+        alt: "Ceremonia al aire libre en Ruka Lefún, Centro de Eventos en Villarrica, Chile",
+        type: "image/webp",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ruka Lefún | Eventos y Matrimonios en Villarrica",
-    description: "Salones para matrimonios y eventos corporativos rodeados de naturaleza en el sur de Chile. Cotiza gratis.",
-    images: ["/og-image.jpg"],
+    site: "@rukalefun",
+    creator: "@rukalefun",
+    title: "Ruka Lefún | Matrimonios y Eventos en Villarrica",
+    description: "Salones rodeados de naturaleza en la Araucanía para matrimonios y eventos. ¡Cotiza gratis!",
+    images: [
+      {
+        url: "/og-image.webp",
+        alt: "Ceremonia al aire libre en Ruka Lefún, Centro de Eventos en Villarrica",
+      }
+    ],
   },
   robots: {
     index: true,
@@ -77,6 +85,11 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  icons: {
+    icon: "/Logo.rukalefun.jpg",
+    apple: "/Logo.rukalefun.jpg",
+    shortcut: "/Logo.rukalefun.jpg",
   },
   verification: {
     // google: 'your-google-verification-code',
