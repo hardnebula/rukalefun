@@ -1,32 +1,14 @@
-"use client"
+// Server Component — opts all admin pages out of static prerendering at build time.
+// Required because AdminGuard uses authClient.useSession() which calls fetch('/api/auth/session')
+// with a relative URL that fails when there is no host (build time).
+export const dynamic = "force-dynamic"
 
-import AdminSidebar from "@/components/layout/AdminSidebar"
-import AdminGuard from "@/components/admin/AdminGuard"
-import AIChat from "@/components/admin/AIChat"
-import { usePathname } from "next/navigation"
+import AdminLayoutClient from "./AdminLayoutClient"
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-
-  // No proteger la página de login
-  if (pathname === "/admin/login") {
-    return <>{children}</>
-  }
-
-  return (
-    <AdminGuard>
-      <div className="flex h-screen overflow-hidden">
-        <AdminSidebar />
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          {children}
-        </main>
-        <AIChat />
-      </div>
-    </AdminGuard>
-  )
+  return <AdminLayoutClient>{children}</AdminLayoutClient>
 }
-
